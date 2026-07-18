@@ -1,0 +1,32 @@
+{
+  "name": "velib-parking-guide",
+  "version": "1.0.0",
+  "description": "Velib Parking Guide - Full stack application",
+  "private": true,
+  "scripts": {
+    "setup:frontend": "cd frontend && npm install",
+    "setup:backend": "cd backend && uv pip install -r requirements.txt",
+    "setup:all": "npm run setup:frontend && npm run setup:backend",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uv uvicorn app.main:app --reload",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build:frontend",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "clean": "rm -rf frontend/node_modules frontend/.vite backend/.venv backend/__pycache__ backend/*.pyc"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "velib",
+    "bike-sharing",
+    "paris",
+    "compass",
+    "navigation"
+  ],
+  "author": "",
+  "license": "MIT"
+}

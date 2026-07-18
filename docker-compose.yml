@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: velib-parking-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=false
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - FRONTEND_URL=http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - MISTRAL_VOX_API_KEY=${MISTRAL_VOX_API_KEY:-}
+    volumes:
+      - ./backend:/app/backend
+      - ./.env:/app/.env
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Frontend Service (for development)
+  frontend:
+    image: node:20-alpine
+    container_name: velib-parking-frontend
+    working_dir: /app/frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    command: npm run dev
+    depends_on:
+      - backend
+    profiles:
+      - development
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: velib-parking-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    profiles:
+      - production
+    restart: unless-stopped
+
+volumes:
+  redis_data:

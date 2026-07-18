@@ -1,0 +1,172 @@
+{
+  "stations": [
+    {
+      "station_id": "1001",
+      "name": "Gare de Lyon - Van Gogh",
+      "location": {"latitude": 48.8442, "longitude": 2.3732},
+      "capacity": 40,
+      "address": "48 Rue de Lyon, 75012 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1002",
+      "name": "Châtelet - Les Halles",
+      "location": {"latitude": 48.8586, "longitude": 2.3463},
+      "capacity": 60,
+      "address": "Place Marguerite de Navarre, 75001 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1003",
+      "name": "Notre-Dame",
+      "location": {"latitude": 48.8534, "longitude": 2.3488},
+      "capacity": 30,
+      "address": "Rue de la Cité, 75004 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1004",
+      "name": "Saint-Michel",
+      "location": {"latitude": 48.8520, "longitude": 2.3455},
+      "capacity": 25,
+      "address": "Place Saint-Michel, 75005 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1005",
+      "name": "Louvre - Rivoli",
+      "location": {"latitude": 48.8606, "longitude": 2.3376},
+      "capacity": 35,
+      "address": "Rue de Rivoli, 75001 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1006",
+      "name": "Pigalle",
+      "location": {"latitude": 48.8841, "longitude": 2.3417},
+      "capacity": 20,
+      "address": "Boulevard de Clichy, 75018 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1007",
+      "name": "Montparnasse",
+      "location": {"latitude": 48.8423, "longitude": 2.3231},
+      "capacity": 45,
+      "address": "Gare Montparnasse, 75014 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1008",
+      "name": "Opéra Garnier",
+      "location": {"latitude": 48.8719, "longitude": 2.3515},
+      "capacity": 30,
+      "address": "Place de l'Opéra, 75009 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1009",
+      "name": "Gare du Nord",
+      "location": {"latitude": 48.8808, "longitude": 2.3550},
+      "capacity": 50,
+      "address": "Rue de Dunkerque, 75010 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1010",
+      "name": "Eiffel Tower - Champ de Mars",
+      "location": {"latitude": 48.8584, "longitude": 2.2945},
+      "capacity": 40,
+      "address": "Avenue de la Bourdonnais, 75007 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1011",
+      "name": "Luxembourg",
+      "location": {"latitude": 48.8467, "longitude": 2.3374},
+      "capacity": 35,
+      "address": "Rue de Médicis, 75006 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1012",
+      "name": "Republique",
+      "location": {"latitude": 48.8692, "longitude": 2.3630},
+      "capacity": 55,
+      "address": "Place de la République, 75011 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1013",
+      "name": "Bastille",
+      "location": {"latitude": 48.8534, "longitude": 2.3690},
+      "capacity": 30,
+      "address": "Place de la Bastille, 75012 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1014",
+      "name": "Marais - Saint-Paul",
+      "location": {"latitude": 48.8545, "longitude": 2.3636},
+      "capacity": 25,
+      "address": "Rue Saint-Antoine, 75004 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1015",
+      "name": "Le Marais - Rambuteau",
+      "location": {"latitude": 48.8620, "longitude": 2.3580},
+      "capacity": 20,
+      "address": "Rue Rambuteau, 75003 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1016",
+      "name": "Les Invalides",
+      "location": {"latitude": 48.8611, "longitude": 2.3125},
+      "capacity": 35,
+      "address": "Avenue de la Motte-Picquet, 75007 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1017",
+      "name": "Arc de Triomphe",
+      "location": {"latitude": 48.8738, "longitude": 2.2950},
+      "capacity": 30,
+      "address": "Place Charles de Gaulle, 75008 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1018",
+      "name": "Père Lachaise",
+      "location": {"latitude": 48.8686, "longitude": 2.3934},
+      "capacity": 25,
+      "address": "Boulevard de Ménilmontant, 75020 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1019",
+      "name": "Buttes-Chaumont",
+      "location": {"latitude": 48.8858, "longitude": 2.3886},
+      "capacity": 20,
+      "address": "Avenue Simon Bolivar, 75019 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    },
+    {
+      "station_id": "1020",
+      "name": "Bercy",
+      "location": {"latitude": 48.8358, "longitude": 2.3789},
+      "capacity": 40,
+      "address": "Cour Saint-Émilion, 75012 Paris",
+      "last_updated": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "metadata": {
+    "source": "Velib Métropole",
+    "format": "GBFS",
+    "last_updated": "2024-07-18T00:00:00Z",
+    "station_count": 20,
+    "city": "Paris",
+    "country": "France"
+  }
+}

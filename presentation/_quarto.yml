@@ -1,0 +1,7 @@
+project:
+  type: default
+  output-dir: ../docs
+  resources:
+    - "assets/"
+  render:
+    - index.qmd

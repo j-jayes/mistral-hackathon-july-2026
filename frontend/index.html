@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/velib-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Velib Parking Guide - Find the closest Velib station with available parking docks in Paris" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Velib Parking Guide</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-title" content="Velib Parking Guide" />
+    
+    <!-- iOS Splash Screen -->
+    <meta name="apple-mobile-web-app-splash-screen-compatible" content="yes" />
+    
+    <!-- Prevent overscroll bounce effect -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Fullscreen on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Disable telephone number detection -->
+    <meta name="format-detection" content="telephone=no" />
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
