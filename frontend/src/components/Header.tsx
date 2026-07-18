@@ -5,10 +5,10 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
   return (
     <header className="w-full px-4 py-4 ios-safe-area-top">
       <div className="flex items-center justify-between max-w-2xl mx-auto">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white drop-shadow-lg">{title}</h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-serif text-2xl font-light text-primary truncate">{title}</h1>
           {subtitle && (
-            <p className="text-sm text-white/70 mt-1">{subtitle}</p>
+            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
           )}
         </div>
         
@@ -32,9 +32,9 @@ export function SettingsButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors"
+      className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-primary hover:bg-secondary transition-colors btn-raised"
     >
-      <Settings className="w-6 h-6 text-white" />
+      <Settings className="w-5 h-5" />
     </button>
   );
 }

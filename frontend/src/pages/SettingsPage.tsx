@@ -53,7 +53,7 @@ export default function SettingsPage({ onGoBack }: SettingsPageProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] ios-safe-area-top">
+    <div className="min-h-screen app-bg ios-safe-area-top">
       <Header
         title="⚙️ Settings"
         rightContent={
@@ -66,10 +66,10 @@ export default function SettingsPage({ onGoBack }: SettingsPageProps) {
       <main className="px-4 py-6">
         <div className="space-y-6">
           {/* Voice Settings */}
-          <Card className="bg-white/90 backdrop-blur-sm border-border">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MicIcon className="w-5 h-5 text-purple-600" />
+                <MicIcon className="w-5 h-5 text-primary" />
                 Voice Input
               </CardTitle>
               <CardDescription>
@@ -131,10 +131,10 @@ export default function SettingsPage({ onGoBack }: SettingsPageProps) {
           </Card>
 
           {/* Display Settings */}
-          <Card className="bg-white/90 backdrop-blur-sm border-border">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <GlobeIcon className="w-5 h-5 text-purple-600" />
+                <GlobeIcon className="w-5 h-5 text-primary" />
                 Display
               </CardTitle>
               <CardDescription>
@@ -178,10 +178,10 @@ export default function SettingsPage({ onGoBack }: SettingsPageProps) {
           </Card>
 
           {/* Navigation Settings */}
-          <Card className="bg-white/90 backdrop-blur-sm border-border">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CompassIcon className="w-5 h-5 text-purple-600" />
+                <CompassIcon className="w-5 h-5 text-primary" />
                 Navigation
               </CardTitle>
               <CardDescription>
@@ -209,7 +209,7 @@ export default function SettingsPage({ onGoBack }: SettingsPageProps) {
           </Card>
 
           {/* About Section */}
-          <Card className="bg-white/90 backdrop-blur-sm border-border">
+          <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle>About</CardTitle>
               <CardDescription>

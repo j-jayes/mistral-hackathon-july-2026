@@ -14,9 +14,10 @@ export default function VoiceInputButton({
       disabled={disabled}
       className={cn(
         'relative flex items-center justify-center gap-2 rounded-2xl p-4 transition-all duration-200',
-        'shadow-lg hover:shadow-xl active:scale-95',
-        'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
-        is_recording ? 'animate-pulse ring-4 ring-white/50 ring-offset-2 ring-offset-purple-700' : '',
+        'shadow-md hover:shadow-lg active:scale-95',
+        is_recording
+          ? 'bg-destructive text-destructive-foreground animate-pulse ring-4 ring-destructive/30'
+          : 'bg-primary text-primary-foreground hover:bg-primary/90',
         disabled ? 'opacity-50 cursor-not-allowed' : '',
         className
       )}

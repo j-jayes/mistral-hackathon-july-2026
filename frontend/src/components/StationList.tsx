@@ -43,20 +43,20 @@ function StationCard({ station, onSelect, is_selected }: StationCardProps) {
   return (
     <button
       onClick={() => onSelect(station)}
-      className={`w-full p-4 rounded-xl text-left transition-all duration-200 ${
-        is_selected 
-          ? 'bg-purple-100 dark:bg-purple-900/30 ring-2 ring-purple-500' 
-          : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+      className={`w-full p-4 rounded-xl text-left transition-all duration-200 border ${
+        is_selected
+          ? 'bg-secondary ring-2 ring-primary border-primary/30'
+          : 'bg-card hover:bg-secondary/50 border-border'
       }`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-lg text-foreground truncate">
             {station.name}
           </h3>
-          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mt-1">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
             <span className="flex items-center gap-1">
-              <Bike className="w-4 h-4 text-green-500" />
+              <Bike className="w-4 h-4 text-success" />
               {station.available_docks} docks
             </span>
             <span className="flex items-center gap-1">
@@ -65,12 +65,12 @@ function StationCard({ station, onSelect, is_selected }: StationCardProps) {
             </span>
           </div>
         </div>
-        
+
         <div className="text-right ml-4">
-          <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
+          <p className="font-mono text-xl font-bold text-primary tabular-nums">
             {distance}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground">
             {station.has_available_docks ? 'Available' : 'Full'}
           </p>
         </div>
