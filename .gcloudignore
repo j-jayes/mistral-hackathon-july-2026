@@ -16,17 +16,15 @@ build
 .env
 **/.env
 
-# Unused alternate prototype + local-only files
+# Unused alternate prototype + local-only files (not needed to build the image)
 src/
 presentation/
+docs/
 specs/
 .vibe/
+node_modules/
 run_*.bat
 setup_*.bat
 fix_specs.py
-
-# Keep these (needed by the build):
-!Dockerfile
-!cloudbuild.yaml
-!backend/**
-!frontend/**
+# NOTE: no "!frontend/**" negation here — it would re-include frontend/node_modules
+# and balloon the upload. backend/ and frontend/ source are included by default.
