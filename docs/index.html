@@ -266,8 +266,8 @@ Jonathan Jayes
 </div>
 <script>
 (function () {
-  var stations = [{"name":"Gare de Lyon","lat":48.8442,"lng":2.3732},{"name":"Châtelet - Les Halles","lat":48.8586,"lng":2.3463},{"name":"Notre-Dame","lat":48.8534,"lng":2.3488},{"name":"Saint-Michel","lat":48.852,"lng":2.3455},{"name":"Louvre - Rivoli","lat":48.8606,"lng":2.3376},{"name":"Pigalle","lat":48.8841,"lng":2.3417},{"name":"Montparnasse","lat":48.8423,"lng":2.3231},{"name":"Opéra Garnier","lat":48.8719,"lng":2.3515},{"name":"Gare du Nord","lat":48.8808,"lng":2.355},{"name":"Eiffel Tower","lat":48.8584,"lng":2.2945},{"name":"Luxembourg","lat":48.8467,"lng":2.3374},{"name":"République","lat":48.8692,"lng":2.363},{"name":"Bastille","lat":48.8534,"lng":2.369},{"name":"Marais - Saint-Paul","lat":48.8545,"lng":2.3636},{"name":"Le Marais - Rambuteau","lat":48.862,"lng":2.358},{"name":"Les Invalides","lat":48.8611,"lng":2.3125},{"name":"Arc de Triomphe","lat":48.8738,"lng":2.295},{"name":"Père Lachaise","lat":48.8686,"lng":2.3934},{"name":"Buttes-Chaumont","lat":48.8858,"lng":2.3886},{"name":"Bercy","lat":48.8358,"lng":2.3789}];
-  var dest = {name:"21 rue des Gravilliers", lat:48.8615, lng:2.3636};
+  var stations = [{"name":"Gare de Lyon","lat":48.8442,"lng":2.3732},{"name":"Châtelet - Les Halles","lat":48.8586,"lng":2.3463},{"name":"Notre-Dame","lat":48.8534,"lng":2.3488},{"name":"Saint-Michel","lat":48.852,"lng":2.3455},{"name":"Louvre - Rivoli","lat":48.8606,"lng":2.3376},{"name":"Pigalle","lat":48.8841,"lng":2.3417},{"name":"Montparnasse","lat":48.8423,"lng":2.3231},{"name":"Opéra Garnier","lat":48.8719,"lng":2.3515},{"name":"Gare du Nord","lat":48.8808,"lng":2.355},{"name":"Eiffel Tower","lat":48.8584,"lng":2.2945},{"name":"Luxembourg","lat":48.8467,"lng":2.3374},{"name":"République","lat":48.8692,"lng":2.363},{"name":"Bastille","lat":48.8534,"lng":2.369},{"name":"Marais - Saint-Paul","lat":48.8545,"lng":2.3636},{"name":"Turbigo - Réaumur","lat":48.8656,"lng":2.3562},{"name":"Les Invalides","lat":48.8611,"lng":2.3125},{"name":"Arc de Triomphe","lat":48.8738,"lng":2.295},{"name":"Père Lachaise","lat":48.8686,"lng":2.3934},{"name":"Buttes-Chaumont","lat":48.8858,"lng":2.3886},{"name":"Bercy","lat":48.8358,"lng":2.3789}];
+  var dest = {name:"21 rue des Gravilliers", lat:48.8637, lng:2.3569};
 
   function haversine(a, b) {
     var R=6371000, toRad=Math.PI/180;
@@ -280,7 +280,7 @@ Jonathan Jayes
   function build() {
     if (built || typeof L === "undefined" || !document.getElementById("pmap")) return;
     built = true;
-    map = L.map("pmap", {scrollWheelZoom:false}).setView([dest.lat, dest.lng], 14);
+    map = L.map("pmap", {scrollWheelZoom:false}).setView([dest.lat, dest.lng], 15);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {attribution:"© OpenStreetMap", maxZoom:19}).addTo(map);
 
