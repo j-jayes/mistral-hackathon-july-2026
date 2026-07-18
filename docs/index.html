@@ -95,7 +95,7 @@
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="index_files/libs/revealjs/dist/theme/quarto-e40dca3157090f33be11722b2de26978.css">
+  <link rel="stylesheet" href="index_files/libs/revealjs/dist/theme/quarto-ebd278d4987c5b5832713997c0ebbdf1.css">
   <link href="index_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="index_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="index_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -256,8 +256,8 @@ Jonathan Jayes
 <h2>Two feeds — that’s the whole backend</h2>
 <p>Framed as coordinates, it shrinks: I need to know where the open docks are, and where the person is standing.</p>
 <div class="cards">
-<section id="vélib-live-feed-opendata.paris.fr" class="card">
-<h4>🚲 Vélib live feed · opendata.paris.fr</h4>
+<div class="card">
+<p><span class="card-title">🚲 Vélib live feed · opendata.paris.fr</span></p>
 <pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
   "name": "Vieille du Temple – Francs Bourgeois",
   "numdocksavailable": 14,
@@ -265,16 +265,16 @@ Jonathan Jayes
   "coordonnees_geo": { "lat": 48.858, "lon": 2.358 }
 }</pre>
 <p><span class="muted" style="font-size:.62em">1,500+ stations, refreshed live.</span></p>
-</section>
-<section id="google-geocoding-api" class="card">
-<h4>📍 Google Geocoding API</h4>
+</div>
+<div class="card">
+<p><span class="card-title">📍 Google Geocoding API</span></p>
 <pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
   "formatted_address": "21 Rue des Gravilliers, 75003 Paris",
   "geometry": { "location": { "lat": 48.8637, "lng": 2.3569 } },
   "status": "OK"
 }</pre>
 <p><span class="muted" style="font-size:.62em">Turns a spoken or typed address into lat / lng.</span></p>
-</section>
+</div>
 </div>
 <div style="font-size:.72em">
 <p>Everything else — nearest dock, distance, bearing — is arithmetic on two lists of coordinates.</p>

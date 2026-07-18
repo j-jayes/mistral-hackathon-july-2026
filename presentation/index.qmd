@@ -66,6 +66,8 @@ The part no app answers is the **last few minutes**: near my destination, which 
 Both assume you're on foot from the start and plan the route before you move. My app skips the plan: by default the compass points to the **nearest free dock**, and once you park, it turns to point at the **door**.
 :::
 
+
+
 ## Two feeds — that's the whole backend
 
 Framed as coordinates, it shrinks: I need to know where the open docks are, and where the person is standing.
@@ -73,7 +75,7 @@ Framed as coordinates, it shrinks: I need to know where the open docks are, and 
 ::: {.cards}
 
 ::: {.card}
-#### 🚲 Vélib live feed · opendata.paris.fr
+[🚲 Vélib live feed · opendata.paris.fr]{.card-title}
 
 <pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
   "name": "Vieille du Temple – Francs Bourgeois",
@@ -86,7 +88,7 @@ Framed as coordinates, it shrinks: I need to know where the open docks are, and 
 :::
 
 ::: {.card}
-#### 📍 Google Geocoding API
+[📍 Google Geocoding API]{.card-title}
 
 <pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
   "formatted_address": "21 Rue des Gravilliers, 75003 Paris",

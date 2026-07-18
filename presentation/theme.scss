@@ -49,6 +49,8 @@ $code-block-bg: #f4f7f9;
   box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
 .card h4 { margin: 0 0 .3rem 0; color: #2b8cbe; font-weight: 400; }
+// Card heading without a real <h4> (avoids generating a nested reveal <section>)
+.card-title { display: block; margin: 0 0 .3rem 0; color: #2b8cbe; font-weight: 400; font-size: 1.05em; }
 
 .reveal .slide-number { background: #2b8cbe; }
 
