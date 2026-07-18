@@ -199,7 +199,7 @@
 
 <section id="title-slide" class="quarto-title-block center">
   <h1 class="title">Parking the Vélib is the hard part</h1>
-  <p class="subtitle">A phone compass that points to the nearest dock with a free spot — Paris</p>
+  <p class="subtitle">A phone compass for the last few minutes of the trip — Paris</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -219,27 +219,66 @@ Jonathan Jayes
 </div>
 <script src="assets/velib-demo.js"></script>
 </section>
-<section id="where-this-started" class="slide level2" data-background-color="#fcfcfc">
-<h2>Where this started</h2>
+<section id="the-last-few-minutes-are-the-problem" class="slide level2" data-background-color="#fcfcfc">
+<h2>The last few minutes are the problem</h2>
 <div class="columns">
 <div class="column" style="width:58%;">
-<p>I cross Paris by Vélib almost daily, and the riding is the easy part. The gamble is parking. The station nearest to wherever I’m going is so often full that I end up circling the block, hunting for an open dock.</p>
-<p>What I really wanted was one answer on my phone: which station near me has a free dock right now, and which way do I walk to reach it?</p>
+<p>When I unlock a Vélib, I already know where I’m going — I don’t route from my front door. The riding is easy.</p>
+<p>The part no app answers is the <strong>last few minutes</strong>: near my destination, which dock has a free spot right now — and once I’ve locked the bike, which way do I walk?</p>
 </div><div class="column" style="width:42%;">
 <p><img data-src="assets/cat.gif" style="border-radius:12px;;width:90.0%"></p>
-<p><span class="muted" style="font-size:.6em">…me, after circling the block three times.</span></p>
+<p><span class="muted" style="font-size:.6em">…me, circling the block for an open dock.</span></p>
 </div></div>
 </section>
-<section id="it-turns-out-i-only-need-two-feeds" class="slide level2">
-<h2>It turns out I only need two feeds</h2>
-<p>Once I framed it as a question about coordinates, the whole thing got small. I need to know where the open docks are, and I need to know where the person is standing.</p>
+<section id="every-app-plans-the-whole-trip-up-front" class="slide level2">
+<h2>Every app plans the whole trip up front</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
-<p>The first feed is Vélib Métropole’s public GBFS status — every station’s position, capacity, and how many docks are open at this moment. For the demo I ship twenty stations offline so nothing breaks on stage.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="assets/google-maps.jpg" class="quarto-figure quarto-figure-center" style="max-height:470px; width:auto; border-radius:12px; border:1px solid #e6e6e6;"></p>
+</figure>
+</div>
+<p><span class="muted" style="font-size:.55em">Google Maps: walk → ride → walk, routed from your front door.</span></p>
 </div><div class="column" style="width:50%;">
-<p>The second is Google’s Geocoding API, which turns a typed or spoken address into a <code>lat, lng</code> pair. That is the only call that leaves the phone, and the key is restricted to geocoding alone.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="assets/velib-app.jpg" class="quarto-figure quarto-figure-center" style="max-height:470px; width:auto; border-radius:12px; border:1px solid #e6e6e6;"></p>
+</figure>
+</div>
+<p><span class="muted" style="font-size:.55em">The Vélib app: 1,400 stations — but which one near you is free <em>now</em>?</span></p>
 </div></div>
-<p>Everything else — distance, bearing, which station is nearest — is just arithmetic on two lists of coordinates.</p>
+<div style="font-size:.72em">
+<p>Both assume you’re on foot from the start and plan the route before you move. My app skips the plan: by default the compass points to the <strong>nearest free dock</strong>, and once you park, it turns to point at the <strong>door</strong>.</p>
+</div>
+</section>
+<section id="two-feeds-thats-the-whole-backend" class="slide level2">
+<h2>Two feeds — that’s the whole backend</h2>
+<p>Framed as coordinates, it shrinks: I need to know where the open docks are, and where the person is standing.</p>
+<div class="cards">
+<section id="vélib-live-feed-opendata.paris.fr" class="card">
+<h4>🚲 Vélib live feed · opendata.paris.fr</h4>
+<pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
+  "name": "Vieille du Temple – Francs Bourgeois",
+  "numdocksavailable": 14,
+  "capacity": 35,
+  "coordonnees_geo": { "lat": 48.858, "lon": 2.358 }
+}</pre>
+<p><span class="muted" style="font-size:.62em">1,500+ stations, refreshed live.</span></p>
+</section>
+<section id="google-geocoding-api" class="card">
+<h4>📍 Google Geocoding API</h4>
+<pre style="font-size:.5em; background:#f4f7f9; border-radius:8px; padding:.7em; margin:.3em 0; overflow:auto;">{
+  "formatted_address": "21 Rue des Gravilliers, 75003 Paris",
+  "geometry": { "location": { "lat": 48.8637, "lng": 2.3569 } },
+  "status": "OK"
+}</pre>
+<p><span class="muted" style="font-size:.62em">Turns a spoken or typed address into lat / lng.</span></p>
+</section>
+</div>
+<div style="font-size:.72em">
+<p>Everything else — nearest dock, distance, bearing — is arithmetic on two lists of coordinates.</p>
+</div>
 </section>
 <section id="the-phone-does-the-arithmetic-the-server-only-geocodes" class="slide level2">
 <h2>The phone does the arithmetic; the server only geocodes</h2>
@@ -251,7 +290,7 @@ Jonathan Jayes
 <pre class="mermaid mermaid-js">flowchart LR
   A["📱 iPhone (React SPA)"] --&gt;|"address string"| B["FastAPI /api/location/geocode"]
   B --&gt;|"lat, lng"| A
-  A --&gt;|"haversine + bearing&lt;br/&gt;vs. 20 stations"| A
+  A --&gt;|"haversine + bearing&lt;br/&gt;vs. live docks"| A
   A --&gt;|"webkitCompassHeading"| N["🧭 needle = bearing − heading"]
   subgraph Client [runs entirely on device]
     A
@@ -265,18 +304,31 @@ Jonathan Jayes
 </div>
 </div>
 <div style="font-size:.7em">
-<p>The only thing that ever leaves the phone is the address I type. Choosing the nearest dock and turning the compass both happen on the device, which keeps it fast and, almost by accident, private.</p>
+<p>The only thing that ever leaves the phone is the address. Choosing the nearest dock and turning the compass both happen on the device — which keeps it fast and, almost by accident, private.</p>
 </div>
 </section>
-<section id="finding-the-nearest-free-dock-computed-live" class="slide level2">
-<h2>Finding the nearest free dock, computed live</h2>
-<div id="pmap" style="height:640px; border-radius:10px; border:1px solid #e6e6e6;">
+<section id="finding-the-nearest-free-dock-live" class="slide level2">
+<h2>Finding the nearest free dock, live</h2>
+<div id="pmap" style="height:620px; border-radius:10px; border:1px solid #e6e6e6;">
 
 </div>
 <script>
 (function () {
-  var stations = [{"name":"Gare de Lyon","lat":48.8442,"lng":2.3732},{"name":"Châtelet - Les Halles","lat":48.8586,"lng":2.3463},{"name":"Notre-Dame","lat":48.8534,"lng":2.3488},{"name":"Saint-Michel","lat":48.852,"lng":2.3455},{"name":"Louvre - Rivoli","lat":48.8606,"lng":2.3376},{"name":"Pigalle","lat":48.8841,"lng":2.3417},{"name":"Montparnasse","lat":48.8423,"lng":2.3231},{"name":"Opéra Garnier","lat":48.8719,"lng":2.3515},{"name":"Gare du Nord","lat":48.8808,"lng":2.355},{"name":"Eiffel Tower","lat":48.8584,"lng":2.2945},{"name":"Luxembourg","lat":48.8467,"lng":2.3374},{"name":"République","lat":48.8692,"lng":2.363},{"name":"Bastille","lat":48.8534,"lng":2.369},{"name":"Marais - Saint-Paul","lat":48.8545,"lng":2.3636},{"name":"Turbigo - Réaumur","lat":48.8656,"lng":2.3562},{"name":"Les Invalides","lat":48.8611,"lng":2.3125},{"name":"Arc de Triomphe","lat":48.8738,"lng":2.295},{"name":"Père Lachaise","lat":48.8686,"lng":2.3934},{"name":"Buttes-Chaumont","lat":48.8858,"lng":2.3886},{"name":"Bercy","lat":48.8358,"lng":2.3789}];
   var dest = {name:"21 rue des Gravilliers", lat:48.8637, lng:2.3569};
+  var FEED = "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-disponibilite-en-temps-reel/records"
+    + "?limit=80&select=name,numdocksavailable,coordonnees_geo"
+    + "&where=" + encodeURIComponent("numdocksavailable > 0 AND within_distance(coordonnees_geo, geom'POINT(2.3569 48.8637)', 900m)");
+
+  // Real stations near the destination — silent fallback if the network is down on stage.
+  var FALLBACK = [
+    {name:"Caire - Dussoubs", lat:48.86785, lng:2.34936, docks:32},
+    {name:"Porte Saint-Martin", lat:48.86860, lng:2.35570, docks:27},
+    {name:"Vieille du Temple - Francs Bourgeois", lat:48.85826, lng:2.35822, docks:14},
+    {name:"Greneta - Sébastopol", lat:48.86524, lng:2.35167, docks:13},
+    {name:"Cossonnerie - Sébastopol", lat:48.86133, lng:2.34942, docks:9},
+    {name:"Grande Truanderie - Saint-Denis", lat:48.86263, lng:2.34981, docks:6},
+    {name:"Place Pasdeloup", lat:48.86265, lng:2.36703, docks:1}
+  ];
 
   function haversine(a, b) {
     var R=6371000, toRad=Math.PI/180;
@@ -285,17 +337,21 @@ Jonathan Jayes
     return 2*R*Math.asin(Math.sqrt(s));
   }
 
-  var map, built=false;
-  function build() {
-    if (built || typeof L === "undefined" || !document.getElementById("pmap")) return;
-    built = true;
+  var map = null, loaded = false;
+
+  function ensureMap() {
+    if (map || typeof L === "undefined" || !document.getElementById("pmap")) return;
     map = L.map("pmap", {scrollWheelZoom:false}).setView([dest.lat, dest.lng], 15);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {attribution:"© OpenStreetMap", maxZoom:19}).addTo(map);
+    L.marker([dest.lat,dest.lng]).addTo(map)
+      .bindTooltip("🎯 " + dest.name, {permanent:true, direction:"top"});
+    setTimeout(function(){ map.invalidateSize(); }, 200);
+  }
 
+  function render(stations) {
     var nearest=null, best=Infinity;
     stations.forEach(function(s){ var d=haversine(dest,s); if(d<best){best=d; nearest=s;} });
-
     stations.forEach(function(s){
       var isNear = s===nearest;
       L.circleMarker([s.lat,s.lng], {
@@ -303,27 +359,49 @@ Jonathan Jayes
         color:isNear?"#469408":"#2b8cbe",
         weight:isNear?3:1, fillColor:isNear?"#469408":"#2b8cbe",
         fillOpacity:isNear?0.9:0.55
-      }).addTo(map).bindTooltip(s.name + (isNear?" — nearest ("+Math.round(best)+" m)":""));
+      }).addTo(map).bindTooltip(s.name + " · " + s.docks + " docks"
+        + (isNear?" — nearest ("+Math.round(best)+" m)":""));
     });
-
-    L.marker([dest.lat,dest.lng]).addTo(map)
-      .bindTooltip("🎯 " + dest.name, {permanent:true, direction:"top"});
-    L.polyline([[dest.lat,dest.lng],[nearest.lat,nearest.lng]],
-      {color:"#469408", weight:3, dashArray:"6 6"}).addTo(map);
-
-    setTimeout(function(){ map.invalidateSize(); }, 200);
+    if (nearest) {
+      L.polyline([[dest.lat,dest.lng],[nearest.lat,nearest.lng]],
+        {color:"#469408", weight:3, dashArray:"6 6"}).addTo(map);
+    }
+    setTimeout(function(){ map.invalidateSize(); }, 150);
   }
 
-  if (document.readyState !== "loading") build();
-  else document.addEventListener("DOMContentLoaded", build);
+  function badge(text) {
+    var b = document.getElementById("feed-badge");
+    if (b) b.textContent = text;
+  }
+
+  function load() {
+    ensureMap();
+    if (!map || loaded) return;
+    loaded = true;
+    fetch(FEED).then(function(r){ return r.json(); }).then(function(d){
+      var st = (d.results||[])
+        .filter(function(r){ return r.coordonnees_geo; })
+        .map(function(r){ return {name:r.name, docks:r.numdocksavailable,
+                                  lat:r.coordonnees_geo.lat, lng:r.coordonnees_geo.lon}; });
+      if (!st.length) throw new Error("empty");
+      render(st);
+      badge("live · " + st.length + " stations with a free dock within 900 m");
+    }).catch(function(){
+      render(FALLBACK);
+      badge("offline fallback");
+    });
+  }
+
+  if (document.readyState !== "loading") load();
+  else document.addEventListener("DOMContentLoaded", load);
   if (window.Reveal) {
-    Reveal.on("ready", function(){ build(); if(map) map.invalidateSize(); });
-    Reveal.on("slidechanged", function(){ build(); if(map) setTimeout(function(){map.invalidateSize();},150); });
+    Reveal.on("ready", function(){ load(); if(map) map.invalidateSize(); });
+    Reveal.on("slidechanged", function(){ load(); if(map) setTimeout(function(){map.invalidateSize();},150); });
   }
 })();
 </script>
 <div style="font-size:.6em">
-<p>Destination 21 rue des Gravilliers, green is the nearest open dock, blue the rest. This is the same haversine that runs on the phone.</p>
+<p>Destination 21 rue des Gravilliers. Green is the nearest open dock, blue the rest — fetched live from <span id="feed-badge">opendata.paris.fr</span>. This is the same haversine that runs on the phone.</p>
 </div>
 </section>
 <section id="getting-a-true-north-compass-out-of-an-iphone" class="slide level2">
@@ -340,8 +418,8 @@ Jonathan Jayes
 <span id="cb1-8"><a href=""></a>                <span class="op">??</span> (<span class="dv">360</span> <span class="op">-</span> e<span class="op">.</span><span class="at">alpha</span>)<span class="op">;</span>   <span class="co">// Android</span></span>
 <span id="cb1-9"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div><div class="column" style="width:48%;">
-<p>This was the part that quietly cost me an afternoon. There are three ways to get nothing at all: without HTTPS the sensors and geolocation are blocked outright; ask for permission on page load and the prompt is simply ignored, because iOS needs a real tap; and if you read <code>e.alpha</code> you get an arbitrary origin instead of north.</p>
-<p>The fix that finally worked was an “Enable Compass” button that calls <code>requestPermission()</code> on the tap, and then reads <code>webkitCompassHeading</code>.</p>
+<p>This quietly cost me an afternoon. Three ways to get nothing: without HTTPS the sensors are blocked; ask for permission on page load and iOS ignores it, because it needs a real tap; and <code>e.alpha</code> gives an arbitrary origin, not north.</p>
+<p>The fix: an “Enable Compass” button that calls <code>requestPermission()</code> on the tap, then reads <code>webkitCompassHeading</code>.</p>
 </div></div>
 </section>
 <section id="one-container-on-cloud-run-and-https-comes-free" class="slide level2">
@@ -365,29 +443,32 @@ Jonathan Jayes
 </div>
 </div>
 <div style="font-size:.68em">
-<p>I package everything as one image: FastAPI serves both the built React app and the API from a single origin, so there is no CORS to fight, and every <code>*.run.app</code> URL is HTTPS by default — which is exactly what the iPhone compass was insisting on. The keys stay in Secret Manager.</p>
+<p>One image: FastAPI serves both the built React app and the API from a single origin, so there’s no CORS to fight, and every <code>*.run.app</code> URL is HTTPS by default — exactly what the iPhone compass insists on. Keys stay in Secret Manager.</p>
 </div>
 </section>
 <section id="three-ways-in-then-you-just-follow-the-needle" class="slide level2">
 <h2>Three ways in, then you just follow the needle</h2>
 <div class="columns">
 <div class="column" style="width:55%;">
-<p>You can reach a destination three ways. Speak it, and Mistral Vox transcribes while a Mistral model pulls the address out of what you said. Type it into the collapsible sidebar. Or hit demo, which drops you at 21 rue des Gravilliers in a single tap.</p>
-<p>From there the compass points at the nearest open dock, and once you’ve parked, a tap on “Parked” flips the needle toward your actual destination. Your position updates live through <code>watchPosition</code>.</p>
+<p>Reach a destination three ways: <strong>speak</strong> it — Mistral Vox transcribes and a Mistral model pulls the address out — <strong>type</strong> it into the sidebar, or hit <strong>demo</strong>.</p>
+<p>From there the compass points at the nearest open dock. Tap “Parked” and the needle flips toward your actual destination. Your position updates live through <code>watchPosition</code>.</p>
 </div><div class="column" style="width:45%;">
 <iframe src="https://velib-app-c3eayx2yta-od.a.run.app" style="width:360px; height:640px; border:10px solid #222; border-radius:34px; background:#fff;" loading="lazy">
 </iframe>
 </div></div>
 </section>
-<section id="where-it-stands-and-whats-next" class="slide level2">
-<h2>Where it stands, and what’s next</h2>
+<section id="try-it-now" class="slide level2" data-background-color="#fcfcfc">
+<h2>Try it now</h2>
 <div class="columns">
-<div class="column" style="width:60%;">
-<p>It’s live today: a single container on Cloud Run, served over HTTPS at <a href="https://velib-app-c3eayx2yta-od.a.run.app">velib-app…run.app</a>, with real geocoding, a working iOS compass, and voice, typed, and demo input all in place.</p>
-<p>What I’d reach for next is swapping the twenty-station demo set for the live GBFS feed, ranking docks by walking time rather than straight-line distance, and turning it into an installable app with offline map tiles.</p>
-</div><div class="column" style="width:40%;">
-<p><img data-src="assets/cat-2.gif" style="border-radius:12px;;width:95.0%"></p>
-<p><span class="muted" style="font-size:.6em">Merci — questions?</span></p>
+<div class="column" style="width:55%;">
+<p>It’s live today — one container on Cloud Run, HTTPS, real geocoding, a working iOS compass, and voice, typed, and demo input all in place.</p>
+<p>Now on the <strong>live</strong> Vélib feed. Next: rank docks by walking time instead of straight-line distance, and make it an installable app with offline map tiles.</p>
+<p><span class="muted" style="font-size:.7em">Merci — questions?</span></p>
+</div><div class="column" style="width:45%;">
+<div style="text-align:center;">
+<p><img data-src="assets/qr-app.svg" style="width:62.0%"></p>
+<p><span class="big-num" style="font-size:.55em">velib-app…run.app</span><br> <span class="muted" style="font-size:.6em">Point your camera here to try it on your phone.</span></p>
+</div>
 </div></div>
 
 </section>
