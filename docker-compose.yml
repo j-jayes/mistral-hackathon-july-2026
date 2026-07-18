@@ -1,64 +1,25 @@
-version: '3.8'
+# Single-container setup — same image that runs on Cloud Run.
+# The FastAPI backend serves the built React SPA and the API on one origin.
+#
+#   docker compose up --build      # http://localhost:8080
+#
+# Put your keys in .env (see .env.example). Missing keys degrade gracefully:
+# geocoding falls back to Paris center, Mistral features run in limited mode.
 
 services:
-  # Backend API Service
-  backend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: velib-parking-backend
+    image: velib-app:local
+    container_name: velib-app
     ports:
-      - "8000:8000"
+      - "8080:8080"
+    env_file:
+      - .env
     environment:
+      - PORT=8080
+      - SERVE_FRONTEND=true
       - DEBUG=false
-      - BACKEND_HOST=0.0.0.0
-      - BACKEND_PORT=8000
-      - FRONTEND_URL=http://localhost:3000
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
-      - MISTRAL_VOX_API_KEY=${MISTRAL_VOX_API_KEY:-}
-    volumes:
-      - ./backend:/app/backend
-      - ./.env:/app/.env
-    command: uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+      - ALLOWED_ORIGINS=*
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  # Frontend Service (for development)
-  frontend:
-    image: node:20-alpine
-    container_name: velib-parking-frontend
-    working_dir: /app/frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_URL=http://backend:8000
-    volumes:
-      - ./frontend:/app/frontend
-      - /app/frontend/node_modules
-    command: npm run dev
-    depends_on:
-      - backend
-    profiles:
-      - development
-    restart: unless-stopped
-
-  # Redis for caching (optional)
-  redis:
-    image: redis:7-alpine
-    container_name: velib-parking-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    profiles:
-      - production
-    restart: unless-stopped
-
-volumes:
-  redis_data:
