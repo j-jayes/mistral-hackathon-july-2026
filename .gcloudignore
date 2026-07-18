@@ -16,12 +16,14 @@ build
 .env
 **/.env
 
-# Unused alternate prototype + local-only files (not needed to build the image)
-src/
-presentation/
-docs/
-specs/
-.vibe/
+# Unused alternate prototype + local-only files (not needed to build the image).
+# NOTE: anchor root-only dirs with a leading slash so "/src/" does NOT also
+# match frontend/src (which broke the Vite build).
+/src/
+/presentation/
+/docs/
+/specs/
+/.vibe/
 node_modules/
 run_*.bat
 setup_*.bat
