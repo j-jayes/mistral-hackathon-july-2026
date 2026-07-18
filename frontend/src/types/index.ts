@@ -141,10 +141,16 @@ export interface GeolocationOptions {
 
 export interface DeviceOrientationEvent {
   absolute: boolean;
-  alpha: number | null; // compass heading in degrees
+  alpha: number | null; // compass heading in degrees (relative on iOS)
   beta: number | null;  // front-to-back tilt
   gamma: number | null; // left-to-right tilt
+  // iOS-only: true-north compass heading (clockwise). Preferred when present.
+  webkitCompassHeading?: number;
+  webkitCompassAccuracy?: number;
 }
+
+// Permission state for the device-orientation (compass) sensor.
+export type CompassPermission = 'unknown' | 'granted' | 'denied' | 'unsupported';
 
 // Action types
 export type AppAction = 

@@ -1,0 +1,27 @@
+# Keep the build context small and avoid leaking local secrets/artifacts.
+.git
+.gitignore
+**/node_modules
+**/.venv
+.venv
+**/__pycache__
+**/*.pyc
+frontend/build
+frontend/dist
+dist
+build
+
+# Local env / secrets — never bake into the image
+.env
+**/.env
+!.env.example
+
+# Unused alternate prototype + docs/assets not needed at runtime
+src/
+presentation/
+specs/
+.vibe/
+*.md
+run_*.bat
+setup_*.bat
+fix_specs.py

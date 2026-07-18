@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Location } from '@/types';
 
 interface GeolocationState {
@@ -20,6 +20,12 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     is_loading: true,
   });
 
+  // Keep the latest options in a ref so callbacks stay stable across renders
+  // (App passes a fresh object literal each render, which would otherwise
+  // re-register the geolocation watcher on every render).
+  const optionsRef = useRef<GeolocationOptions>(options);
+  optionsRef.current = options;
+
   const onSuccess = useCallback((position: GeolocationPosition) => {
     const { latitude, longitude } = position.coords;
     setGeolocation({
@@ -31,7 +37,7 @@ export function useGeolocation(options: GeolocationOptions = {}) {
 
   const onError = useCallback((error: GeolocationPositionError) => {
     let error_message = 'Failed to get location';
-    
+
     switch (error.code) {
       case error.PERMISSION_DENIED:
         error_message = 'Location access denied. Please enable location permissions.';
@@ -45,12 +51,12 @@ export function useGeolocation(options: GeolocationOptions = {}) {
       default:
         error_message = error.message || error_message;
     }
-    
-    setGeolocation({
-      location: null,
+
+    setGeolocation(prev => ({
+      ...prev,
       error: error_message,
       is_loading: false,
-    });
+    }));
   }, []);
 
   const getCurrentPosition = useCallback(() => {
@@ -64,43 +70,35 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     }
 
     setGeolocation(prev => ({ ...prev, is_loading: true }));
-    
-    navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
-  }, [onSuccess, onError, options]);
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, optionsRef.current);
+  }, [onSuccess, onError]);
 
-  // Watch position for continuous updates
-  const watchPosition = useCallback(() => {
+  // Continuously watch the position for live navigation updates.
+  useEffect(() => {
     if (!navigator.geolocation) {
       setGeolocation({
         location: null,
         error: 'Geolocation is not supported by your browser',
         is_loading: false,
       });
-      return null;
+      return;
     }
 
-    setGeolocation(prev => ({ ...prev, is_loading: true }));
-    
-    return navigator.geolocation.watchPosition(onSuccess, onError, options);
-  }, [onSuccess, onError, options]);
+    const watchId = navigator.geolocation.watchPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 5000,
+      ...optionsRef.current,
+    });
 
-  // Clear watch
-  const clearWatch = useCallback((watchId: number | null) => {
-    if (watchId !== null) {
+    return () => {
       navigator.geolocation.clearWatch(watchId);
-    }
-  }, []);
-
-  // Get position once on mount
-  useEffect(() => {
-    getCurrentPosition();
-  }, [getCurrentPosition]);
+    };
+  }, [onSuccess, onError]);
 
   return {
     ...geolocation,
     getCurrentPosition,
-    watchPosition,
-    clearWatch,
   };
 }
 

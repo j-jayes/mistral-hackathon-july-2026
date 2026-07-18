@@ -78,5 +78,3 @@ function StationCard({ station, onSelect, is_selected }: StationCardProps) {
     </button>
   );
 }
-
-export default StationList;

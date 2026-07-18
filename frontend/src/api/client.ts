@@ -9,7 +9,10 @@ import {
 } from '@/types';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use `??` (not `||`) so an intentional empty string keeps same-origin relative
+// requests in the production single-container build. In dev, VITE_API_URL points
+// at the backend (or Vite proxies /api).
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({

@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Location, VelibStation, VelibStationSummary, DestinationInput, ProcessingResult } from '@/types';
+import { Location, VelibStation, VelibStationSummary, DestinationInput, ProcessingResult, CompassPermission } from '@/types';
+import { apiClient } from '@/api/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { formatDistance, getDirectionName, cn } from '@/lib/utils';
 import Compass from '@/components/Compass';
@@ -11,7 +12,7 @@ import StationList from '@/components/StationList';
 import Header from '@/components/Header';
 import SettingsButton from '@/components/SettingsButton';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Clock } from 'lucide-react';
+import { RefreshCw, Clock, Navigation } from 'lucide-react';
 
 interface HomePageProps {
   currentLocation: Location | null;
@@ -24,6 +25,8 @@ interface HomePageProps {
   targetDistance: number | null;
   lastUpdated: string;
   isRefreshing: boolean;
+  compassPermission: CompassPermission;
+  onEnableCompass: () => void;
   onVoiceResult: (result: ProcessingResult) => void;
   onToggleParked: () => void;
   onSelectStation: (station: VelibStation) => void;
@@ -42,6 +45,8 @@ export default function HomePage({
   targetDistance,
   lastUpdated,
   isRefreshing,
+  compassPermission,
+  onEnableCompass,
   onVoiceResult,
   onToggleParked,
   onSelectStation,
@@ -50,6 +55,27 @@ export default function HomePage({
 }: HomePageProps) {
   const navigate = useNavigate();
   const [showStations, setShowStations] = useState<boolean>(false);
+
+  // Compass size adapts to the viewport so it fits small screens without
+  // colliding with the status text or the bottom control bar.
+  const [compassSize, setCompassSize] = useState<number>(280);
+  useEffect(() => {
+    const computeSize = () => {
+      const byWidth = window.innerWidth - 96;   // leave side padding
+      const byHeight = window.innerHeight - 400; // leave room for header/status/controls
+      setCompassSize(Math.max(180, Math.min(280, byWidth, byHeight)));
+    };
+    computeSize();
+    window.addEventListener('resize', computeSize);
+    window.addEventListener('orientationchange', computeSize);
+    return () => {
+      window.removeEventListener('resize', computeSize);
+      window.removeEventListener('orientationchange', computeSize);
+    };
+  }, []);
+
+  const showEnableCompass =
+    compassPermission === 'unknown' || compassPermission === 'denied';
 
   // Voice input hook
   const voiceInput = useVoiceInput({
@@ -149,7 +175,7 @@ export default function HomePage({
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 relative">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 pb-28 relative overflow-y-auto">
         {/* Status Message */}
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -196,21 +222,41 @@ export default function HomePage({
         </div>
 
         {/* Compass */}
-        <div className="relative mb-8">
+        <div className="relative mb-6">
           <Compass
             target_direction={targetDirection}
             target_distance={targetDistance}
-            size={280}
+            size={compassSize}
           />
-          
+
           {/* Distance Display (centered in compass) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <DistanceDisplay 
+            <DistanceDisplay
               distance={targetDistance}
               className="text-2xl font-bold text-white drop-shadow-lg"
             />
           </div>
         </div>
+
+        {/* Enable Compass (iOS requires a user gesture to grant orientation access) */}
+        {showEnableCompass && (
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={onEnableCompass}
+              className="rounded-full px-6 gap-2 shadow-lg"
+            >
+              <Navigation className="w-5 h-5" />
+              <span>Enable Compass</span>
+            </Button>
+            <p className="text-xs text-white/70 max-w-[16rem] text-center">
+              {compassPermission === 'denied'
+                ? 'Compass access was blocked. Enable Motion & Orientation in Safari settings, then tap again.'
+                : 'Tap to allow motion and orientation so the needle can point the way.'}
+            </p>
+          </div>
+        )}
 
         {/* Target Info */}
         {selectedStation && (
@@ -253,23 +299,35 @@ export default function HomePage({
           </div>
         )}
 
-        {/* Voice Input Button */}
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
+        {/* Bottom control bar — single row, clears the iOS home indicator via
+            safe-area padding, so the three controls never overlap on short screens. */}
+        <div className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          {/* Stations Toggle Button */}
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={toggleStations}
+            className="w-14 h-14 p-0 rounded-full shrink-0"
+            aria-label="Show nearby stations"
+          >
+            <span className="text-2xl">📍</span>
+          </Button>
+
+          {/* Voice Input Button */}
           <VoiceInputButton
             is_recording={voiceInput.is_recording}
             onClick={handleVoiceClick}
-            className="w-48"
+            className="flex-1 max-w-[12rem]"
           />
-        </div>
 
-        {/* Parked Toggle Button */}
-        {selectedStation && (
-          <div className="absolute bottom-20 right-4">
+          {/* Parked Toggle Button (placeholder keeps the voice button centered) */}
+          {selectedStation ? (
             <Button
               variant={isParked ? "secondary" : "outline"}
               size="lg"
               onClick={onToggleParked}
-              className="w-14 h-14 p-0 rounded-full"
+              className="w-14 h-14 p-0 rounded-full shrink-0"
+              aria-label={isParked ? "Navigate to station" : "Mark as parked"}
             >
               {isParked ? (
                 <span className="text-2xl">🚶</span>
@@ -277,19 +335,9 @@ export default function HomePage({
                 <span className="text-2xl">🚲</span>
               )}
             </Button>
-          </div>
-        )}
-
-        {/* Stations Toggle Button */}
-        <div className="absolute bottom-20 left-4">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={toggleStations}
-            className="w-14 h-14 p-0 rounded-full"
-          >
-            <span className="text-2xl">📍</span>
-          </Button>
+          ) : (
+            <div className="w-14 h-14 shrink-0" aria-hidden="true" />
+          )}
         </div>
 
         {/* Station List (bottom sheet) */}

@@ -10,7 +10,7 @@ import { stationCache } from '@/lib/stationCache';
 import { geocodeAddress } from '@/lib/geocoding';
 import HomePage from '@/pages/HomePage';
 import SettingsPage from '@/pages/SettingsPage';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import velibStationsData from '@/data/velibStations.json';
 
 function App() {
@@ -371,6 +371,8 @@ function App() {
                 targetDistance={targetDistance}
                 lastUpdated={formatLastUpdated()}
                 isRefreshing={isRefreshing}
+                compassPermission={orientation.permission}
+                onEnableCompass={orientation.requestPermission}
                 onVoiceResult={handleVoiceResult}
                 onToggleParked={toggleParkedStatus}
                 onSelectStation={selectStation}

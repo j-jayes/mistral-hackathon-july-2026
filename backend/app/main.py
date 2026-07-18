@@ -4,14 +4,16 @@ Main FastAPI application for Velib Parking Guide.
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Optional, List
 from datetime import datetime
+from pathlib import Path
 import logging
 import os
+import httpx
 
-from ..config.settings import get_settings
+from ..config.settings import get_settings, get_geocoding_api_key
 from ..models.location import Location, LocationWithAddress
 from ..models.velib import VelibStation, VelibStationSummary
 from ..models.user import UserInput, VoiceInput, ProcessingResult, DestinationInput
@@ -35,10 +37,13 @@ app = FastAPI(
 
 # Add CORS middleware
 settings = get_settings()
+_cors_origins = settings.allowed_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    # Browsers reject wildcard origin + credentials; the single-container deploy
+    # is same-origin so credentials aren't needed there anyway.
+    allow_credentials=_cors_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -82,31 +87,78 @@ async def shutdown_event():
 
 # ==================== Location Endpoints ====================
 
+async def _google_geocode(address: str, api_key: str) -> Optional[LocationWithAddress]:
+    """Call the Google Geocoding API to resolve an address to coordinates.
+
+    Returns a LocationWithAddress on success, or None if the address could not
+    be resolved (so the caller can decide how to fall back).
+    """
+    params = {
+        "address": address,
+        "key": api_key,
+        # Bias results toward France / Paris so short queries resolve well.
+        "region": "fr",
+        "components": "country:FR",
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(str(settings.GEOCODING_API_URL), params=params)
+        resp.raise_for_status()
+        data = resp.json()
+
+    status = data.get("status")
+    if status == "OK" and data.get("results"):
+        result = data["results"][0]
+        loc = result["geometry"]["location"]
+        return LocationWithAddress(
+            latitude=loc["lat"],
+            longitude=loc["lng"],
+            address=address,
+            formatted_address=result.get("formatted_address", address),
+        )
+
+    if status == "ZERO_RESULTS":
+        return None
+
+    # REQUEST_DENIED / OVER_QUERY_LIMIT / INVALID_REQUEST etc.
+    logger.warning(
+        "Google Geocoding returned status=%s error=%s for address=%r",
+        status, data.get("error_message"), address,
+    )
+    raise HTTPException(status_code=502, detail=f"Geocoding provider error: {status}")
+
+
 @app.get("/api/location/geocode", response_model=LocationWithAddress)
 async def geocode_address(
     address: str = Query(..., description="Address to geocode")
 ):
     """
-    Convert an address to geographic coordinates.
-    
-    In production, this would use a geocoding API.
-    For demo purposes, returns mock coordinates for Paris addresses.
+    Convert an address to geographic coordinates using the Google Geocoding API.
+
+    Falls back to Paris center when no API key is configured, so the demo keeps
+    working; the frontend has its own pattern-matching fallback on top of this.
     """
-    # Mock implementation - in production use geocoding API
-    if "paris" in address.lower():
-        return LocationWithAddress(
-            latitude=48.8566,
-            longitude=2.3522,
-            address=address,
-            formatted_address=f"{address}, Paris, France"
-        )
+    api_key = get_geocoding_api_key()
+
+    if api_key:
+        try:
+            result = await _google_geocode(address, api_key)
+            if result is not None:
+                return result
+            logger.info("Geocoding found no results for address=%r", address)
+        except HTTPException:
+            raise
+        except Exception as exc:  # network/parse errors -> graceful fallback
+            logger.warning("Geocoding request failed for %r: %s", address, exc)
     else:
-        return LocationWithAddress(
-            latitude=48.8566,
-            longitude=2.3522,
-            address=address,
-            formatted_address=address
-        )
+        logger.info("GEOCODING_API_KEY not set; returning Paris-center fallback")
+
+    # Fallback: Paris center (keeps the app usable without a key / when unresolved)
+    return LocationWithAddress(
+        latitude=48.8566,
+        longitude=2.3522,
+        address=address,
+        formatted_address=f"{address}, Paris, France" if "paris" in address.lower() else address,
+    )
 
 
 # ==================== Velib Station Endpoints ====================
@@ -298,9 +350,9 @@ async def health_check():
     }
 
 
-@app.get("/")
-async def root():
-    """Root endpoint with API information."""
+@app.get("/api")
+async def api_root():
+    """API information endpoint (the SPA is served at '/')."""
     return {
         "name": "Velib Parking Guide API",
         "version": "1.0.0",
@@ -310,10 +362,52 @@ async def root():
     }
 
 
-# Mount static files (for frontend in production)
-# In development, frontend runs separately on port 3000
-# In production, you can serve the built React app from here
-# app.mount("/", StaticFiles(directory="../frontend/build", html=True), name="frontend")
+# ==================== Frontend (SPA) Serving ====================
+# In production (single-container deploy) the built React app is served from
+# the same origin as the API. Enabled via SERVE_FRONTEND=true.
+#
+# The build directory is resolved from an absolute FRONTEND_BUILD_DIR if given,
+# otherwise from this file's location (repo_root/frontend/build) -- NOT the
+# process CWD, which would be wrong inside the container.
+def _resolve_frontend_dir() -> Path:
+    configured = settings.FRONTEND_BUILD_DIR
+    if configured and os.path.isabs(configured):
+        return Path(configured)
+    # main.py lives at <root>/backend/app/main.py -> parents[2] == <root>
+    return Path(__file__).resolve().parents[2] / "frontend" / "build"
+
+
+FRONTEND_DIR = _resolve_frontend_dir()
+
+if settings.SERVE_FRONTEND and FRONTEND_DIR.exists():
+    logger.info("Serving frontend SPA from %s", FRONTEND_DIR)
+
+    # Vite emits hashed assets under /assets; mount them for cache-friendly serving.
+    assets_dir = FRONTEND_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    _INDEX_FILE = FRONTEND_DIR / "index.html"
+
+    @app.get("/{full_path:path}")
+    async def spa_catch_all(full_path: str):
+        """Serve static files, falling back to index.html for SPA routing."""
+        # Never let the SPA fallback shadow the API / docs surface.
+        if full_path.startswith(("api", "docs", "redoc", "openapi.json")):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # Serve a real static file if it exists (favicon, manifest, icons, etc.).
+        candidate = (FRONTEND_DIR / full_path).resolve()
+        if str(candidate).startswith(str(FRONTEND_DIR.resolve())) and candidate.is_file():
+            return FileResponse(str(candidate))
+
+        # Otherwise return the SPA entry point (client-side routing handles it).
+        return FileResponse(str(_INDEX_FILE))
+elif settings.SERVE_FRONTEND:
+    logger.warning(
+        "SERVE_FRONTEND=true but build dir %s does not exist; serving API only",
+        FRONTEND_DIR,
+    )
 
 
 if __name__ == "__main__":
