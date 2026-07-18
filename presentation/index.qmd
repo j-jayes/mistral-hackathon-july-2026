@@ -16,6 +16,16 @@ format:
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 ---
 
+## {.fullbleed background-color="#fcfcfc"}
+
+::: {.fullbleed-wrap}
+<div id="velib-player"></div>
+:::
+
+```{=html}
+<script src="assets/velib-demo.js"></script>
+```
+
 ## Where this started {background-color="#fcfcfc"}
 
 ::: {.columns}
