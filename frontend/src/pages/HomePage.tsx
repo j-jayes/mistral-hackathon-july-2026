@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Location, VelibStation, VelibStationSummary, DestinationInput, ProcessingResult, CompassPermission } from '@/types';
-import { apiClient } from '@/api/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
-import { formatDistance, getDirectionName, cn } from '@/lib/utils';
+import { formatDistance, getDirectionName } from '@/lib/utils';
+import { convertStationData } from '@/lib/stations';
 import Compass from '@/components/Compass';
 import DistanceDisplay from '@/components/DistanceDisplay';
 import VoiceInputButton from '@/components/VoiceInputButton';
@@ -14,6 +14,7 @@ import SettingsButton from '@/components/SettingsButton';
 import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Clock, Navigation, Menu } from 'lucide-react';
+import velibStationsData from '@/data/velibStations.json';
 
 interface HomePageProps {
   currentLocation: Location | null;
@@ -64,12 +65,12 @@ export default function HomePage({
 
   // Compass size adapts to the viewport so it fits small screens without
   // colliding with the status text or the bottom control bar.
-  const [compassSize, setCompassSize] = useState<number>(280);
+  const [compassSize, setCompassSize] = useState<number>(260);
   useEffect(() => {
     const computeSize = () => {
       const byWidth = window.innerWidth - 96;   // leave side padding
-      const byHeight = window.innerHeight - 400; // leave room for header/status/controls
-      setCompassSize(Math.max(180, Math.min(280, byWidth, byHeight)));
+      const byHeight = window.innerHeight - 380; // leave room for header/status/card/controls
+      setCompassSize(Math.max(170, Math.min(260, byWidth, byHeight)));
     };
     computeSize();
     window.addEventListener('resize', computeSize);
@@ -111,17 +112,26 @@ export default function HomePage({
     }
   }, [voiceInput]);
 
-  // Show station list
   const toggleStations = useCallback(() => {
     setShowStations(prev => !prev);
   }, []);
 
-  // Navigate to settings
   const handleSettingsClick = useCallback(() => {
     navigate('/settings');
   }, [navigate]);
 
-  // Clear errors
+  // Resolve a list summary to a full station and hand it up to App.
+  const handleSelectFromList = useCallback((summary: VelibStationSummary) => {
+    const raw = velibStationsData.stations.find(
+      s => s.station_id === summary.station_id
+    );
+    if (raw) {
+      onSelectStation(convertStationData(raw));
+      setShowStations(false);
+    }
+  }, [onSelectStation]);
+
+  // Surface geolocation errors as a toast, once.
   useEffect(() => {
     if (locationError) {
       toast.error(locationError);
@@ -129,52 +139,25 @@ export default function HomePage({
     }
   }, [locationError, onClearError]);
 
-  // Get status message
-  const getStatusMessage = useCallback(() => {
-    if (!currentLocation) {
-      return 'Waiting for location...';
-    }
-    
-    if (destination) {
-      return `Going to: ${destination.address}`;
-    }
-    
-    if (selectedStation) {
-      return `Target: ${selectedStation.name}`;
-    }
-    
-    if (nearbyStations.length > 0) {
-      return `${nearbyStations.length} stations with available docks nearby`;
-    }
-    
-    return 'No stations found nearby';
-  }, [currentLocation, destination, selectedStation, nearbyStations]);
+  // One concise headline for the top of the screen.
+  const statusHeadline = !currentLocation
+    ? 'Waiting for your location…'
+    : destination
+      ? (isParked ? 'Parked — head to your destination' : 'Nearest station with a free dock')
+      : selectedStation
+        ? 'Nearest station with a free dock'
+        : nearbyStations.length > 0
+          ? `${nearbyStations.length} stations nearby`
+          : 'Looking for stations…';
 
-  // Get sub-status message
-  const getSubStatusMessage = useCallback(() => {
-    if (!currentLocation) {
-      return 'Enable location permissions to find nearby stations';
-    }
-    
-    if (isParked && destination) {
-      return 'Compass pointing to your destination';
-    }
-    
-    if (selectedStation) {
-      const distance = formatDistance(targetDistance);
-      const direction = targetDirection !== null ? getDirectionName(targetDirection) : 'Unknown';
-      return `Station is ${distance} away, direction: ${direction}`;
-    }
-    
-    return 'Point the compass to navigate to the closest station with available docks';
-  }, [currentLocation, isParked, destination, selectedStation, targetDistance, targetDirection]);
+  const directionName = targetDirection !== null ? getDirectionName(targetDirection) : '--';
 
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
       <Header
         title="🚲 Velib Parking Guide"
-        subtitle={getSubStatusMessage()}
+        subtitle={destination ? destination.address : 'Point the compass to your station'}
         leftContent={
           <button
             onClick={() => setSidebarOpen(true)}
@@ -199,61 +182,33 @@ export default function HomePage({
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pb-28 relative overflow-y-auto">
-        {/* Status Message */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
-            <h2 className="text-lg font-medium text-foreground">
-              {getStatusMessage()}
-            </h2>
-
-            {/* Last Updated Badge */}
-            <div className="inline-flex items-center gap-1 bg-card border border-border rounded-full px-3 py-1 text-xs text-muted-foreground">
+      <main className="flex-1 flex flex-col items-center justify-between px-4 pt-3 pb-28 relative overflow-y-auto">
+        {/* Status row: one headline + a single subtle meta line */}
+        <div className="text-center shrink-0">
+          <h2 className="text-base font-medium text-foreground">{statusHeadline}</h2>
+          <div className="mt-1 flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>{lastUpdated}</span>
-            </div>
-          </div>
-
-          {/* Refresh Button */}
-          <div className="mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
+              {lastUpdated}
+            </span>
+            <button
               onClick={onRefreshStations}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary"
+              className="inline-flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </Button>
+              <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           </div>
-
-          {/* Parked Status */}
-          {isParked && (
-            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
-              <span className="w-2 h-2 bg-success rounded-full"></span>
-              <span>Parked! Compass pointing to destination</span>
-            </div>
-          )}
-
-          {/* Not Parked Status */}
-          {!isParked && selectedStation && (
-            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
-              <span className="w-2 h-2 bg-primary rounded-full"></span>
-              <span>Heading to station with available docks</span>
-            </div>
-          )}
         </div>
 
-        {/* Compass */}
-        <div className="relative mb-6">
+        {/* Compass — the hero of the screen */}
+        <div className="relative my-2 shrink-0">
           <Compass
             target_direction={targetDirection}
             target_distance={targetDistance}
             size={compassSize}
           />
-
-          {/* Distance Display (centered in compass) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <DistanceDisplay distance={targetDistance} />
           </div>
@@ -261,7 +216,7 @@ export default function HomePage({
 
         {/* Enable Compass (iOS requires a user gesture to grant orientation access) */}
         {showEnableCompass && (
-          <div className="mb-6 flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 shrink-0">
             <Button
               variant="secondary"
               size="lg"
@@ -279,45 +234,48 @@ export default function HomePage({
           </div>
         )}
 
-        {/* Target Info */}
-        {selectedStation && (
-          <div className="bg-card border border-border rounded-xl p-4 mb-8 w-full max-w-md shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+        {/* One consolidated target card: destination + the station we're guiding to */}
+        {selectedStation ? (
+          <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-sm overflow-hidden shrink-0">
+            {destination && (
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-secondary/60 text-secondary-foreground text-sm border-b border-border">
+                <span>🎯</span>
+                <span className="truncate">
+                  {isParked ? 'Destination: ' : 'Parking near: '}
+                  {destination.address}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3 p-4">
+              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center shrink-0">
                 <span className="text-xl">🚲</span>
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-foreground truncate">{selectedStation.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {selectedStation.status.num_docks_available} docks available
+                  {selectedStation.status.num_docks_available} docks free
                 </p>
               </div>
-              <div className="text-right">
-                <p className="font-mono text-xl font-bold text-primary tabular-nums">
+              <div className="text-right shrink-0">
+                <p className="font-mono text-xl font-bold text-primary tabular-nums leading-none">
                   {formatDistance(targetDistance)}
                 </p>
-                <p className="font-mono text-xs text-muted-foreground">
-                  {targetDirection !== null ? getDirectionName(targetDirection) : '--'}
-                </p>
+                <p className="font-mono text-xs text-muted-foreground mt-1">{directionName}</p>
               </div>
             </div>
           </div>
-        )}
-
-        {destination && !isParked && (
-          <div className="bg-card border border-border rounded-xl p-4 mb-8 w-full max-w-md shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                <span className="text-xl">🎯</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground truncate">{destination.address}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Destination set
-                </p>
-              </div>
+        ) : destination ? (
+          <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-sm p-4 flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-xl">🎯</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground truncate">{destination.address}</h3>
+              <p className="text-sm text-muted-foreground">Finding the nearest station…</p>
             </div>
           </div>
+        ) : (
+          <div className="shrink-0" aria-hidden="true" />
         )}
 
         {/* Bottom control bar — single row, clears the iOS home indicator via
@@ -350,11 +308,7 @@ export default function HomePage({
               className="w-14 h-14 p-0 rounded-full shrink-0"
               aria-label={isParked ? "Navigate to station" : "Mark as parked"}
             >
-              {isParked ? (
-                <span className="text-2xl">🚶</span>
-              ) : (
-                <span className="text-2xl">🚲</span>
-              )}
+              <span className="text-2xl">{isParked ? '🚶' : '🚲'}</span>
             </Button>
           ) : (
             <div className="w-14 h-14 shrink-0" aria-hidden="true" />
@@ -367,46 +321,7 @@ export default function HomePage({
             <div className="flex-1 overflow-y-auto">
               <StationList
                 stations={nearbyStations}
-                onSelectStation={(station) => {
-                  // Find full station details from pre-bundled data
-                  import('@/data/velibStations.json').then(module => {
-                    const fullStationData = module.default.stations.find(
-                      s => s.station_id === station.station_id
-                    );
-                    if (fullStationData) {
-                      // Convert to VelibStation format
-                      const fullStation: VelibStation = {
-                        station_id: fullStationData.station_id,
-                        name: fullStationData.name,
-                        location: fullStationData.location,
-                        capacity: fullStationData.capacity || 30,
-                        status: {
-                          station_id: fullStationData.station_id,
-                          is_renting: true,
-                          is_returning: true,
-                          last_updated: fullStationData.last_updated || new Date().toISOString(),
-                          num_bikes_available: Math.floor(Math.random() * 15) + 5,
-                          num_docks_available: Math.floor(Math.random() * 10) + 3,
-                          num_bikes_available_types: { mechanical: Math.floor(Math.random() * 10) + 3, electrical: Math.floor(Math.random() * 5) + 1 },
-                          num_docks_available_types: { mechanical: Math.floor(Math.random() * 6) + 2, electrical: Math.floor(Math.random() * 4) + 1 }
-                        },
-                        has_available_docks: true,
-                        has_available_bikes: true
-                      };
-                      onSelectStation(fullStation);
-                      setShowStations(false);
-                    }
-                  }).catch(() => {
-                    // Fallback to API if pre-bundled data not available
-                    apiClient.get_station_by_id(station.station_id)
-                      .then(fullStation => {
-                        if (fullStation) {
-                          onSelectStation(fullStation);
-                          setShowStations(false);
-                        }
-                      });
-                  });
-                }}
+                onSelectStation={handleSelectFromList}
                 selected_station_id={selectedStation?.station_id || null}
               />
             </div>

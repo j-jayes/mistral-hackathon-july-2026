@@ -279,3 +279,6 @@ tempCodeRunnerFile.py
 # Re-include frontend source lib (the generic Python "lib/" rule above excludes it)
 !frontend/src/lib/
 !frontend/src/lib/**
+
+# Claude Code local worktrees / agent state
+.claude/

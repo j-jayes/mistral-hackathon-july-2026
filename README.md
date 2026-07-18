@@ -1,26 +1,37 @@
 # Velib Parking Guide 🚲
 
-A beautiful web app for iPhone that helps you find the closest Velib dock with available parking spots in Paris.
+A phone compass for the **last few minutes** of a Paris bike trip.
 
 ![React](https://img.shields.io/badge/React-18-blue.svg) ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-purple.svg) ![Mistral](https://img.shields.io/badge/Mistral-AI-orange.svg)
 
+## 🧭 The problem
+
+When you unlock a Vélib, you already know where you're going — you don't route from your front door. The riding is easy.
+
+The part no app answers is the **last few minutes**. Google Maps and the Vélib app both assume you're on foot from the start and plan the whole route before you move: walk to a station, ride, park, walk to the door. Neither tells you, in the moment, the two things you actually need near your destination:
+
+1. Which dock has a **free spot right now**?
+2. Once you've locked the bike, **which way do you walk**?
+
+This app skips the plan. By default the compass points to the nearest free dock. Say your destination and, once you park, the needle turns to point at the door.
+
 ## 🎯 Features
 
-- **Real-time Compass Navigation**: Points you directly to the closest Velib station with available docks
-- **Voice Input with Mistral Vox**: Speak your destination naturally in French or English
-- **Smart Destination Extraction**: Uses Mistral LLM to understand your spoken destination
-- **Beautiful UI with Tailwind CSS**: Modern, responsive design optimized for iPhone
-- **Geolocation Integration**: Uses browser geolocation to track your position
-- **Device Orientation**: Compass automatically adjusts based on your phone's orientation
-- **Park Mode**: Toggle between navigating to station vs. navigating to your destination
+- **Compass to the nearest free dock**: Points straight at the closest station with an open dock — no route, just a bearing
+- **Park mode**: Tap "Parked" and the needle flips from the dock to your final destination
+- **Voice input with Mistral Vox**: Speak your destination naturally in French or English
+- **Smart destination extraction**: A Mistral LLM pulls the address out of what you said and geocodes it
+- **Live Vélib availability**: Dock counts come from the Paris open-data real-time feed
+- **On-device math**: Distance, bearing, and nearest-dock selection all run in the browser — the only call that leaves the phone is the address
+- **True-north iOS compass**: Uses `webkitCompassHeading` behind a user-gesture permission tap
 
 ## 📱 How It Works
 
-1. **Speak your destination**: Tap the microphone button and say "I'm going to 21 rue des Gravilliers"
-2. **Mistral LLM processes your input**: Extracts the destination address
-3. **Find closest station**: App finds the nearest Velib station with available parking docks
-4. **Compass points the way**: Follow the compass needle to reach the station
-5. **Park your bike**: Tap the park button to switch the compass to point to your destination
+1. **Open the app**: The compass immediately points to the nearest dock with a free spot near you
+2. **Give it a destination** (optional): Speak it ("I'm going to 21 rue des Gravilliers"), type it, or hit demo
+3. **Mistral transcribes and extracts**: Mistral Vox turns speech to text; a Mistral LLM pulls out the address, which is geocoded to `lat, lng`
+4. **Ride, following the needle**: The compass points at the nearest free dock the whole way
+5. **Park your bike**: Tap "Parked" and the compass switches to point at your actual destination for the final walk
 
 ## 🏗️ Tech Stack
 
@@ -42,42 +53,86 @@ A beautiful web app for iPhone that helps you find the closest Velib dock with a
 - **Mistral Vox** - Speech-to-text for voice input
 - **Mistral LLM** - Natural language processing for destination extraction
 
-## 🚀 Quick Start (Docker Compose)
-
-The app runs as a **single container** — FastAPI serves both the API and the
-built React SPA on one origin, exactly like the deployed Cloud Run image.
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker + Docker Compose
-- Mistral API key (optional — voice/LLM fall back to limited mode without it)
-- Google Geocoding API key (optional — address lookup falls back to Paris center without it)
+- Node.js 18+ (for frontend)
+- Python 3.11+ (for backend)
+- Mistral API keys (optional - has fallback mode)
 
-### 1. Configure environment
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-repo/velib-parking-guide.git
+cd velib-parking-guide
+```
+
+### 2. Setup Environment Variables
+
+Create `.env` file in the project root:
 
 ```bash
 cp .env.example .env
-# edit .env and add MISTRAL_API_KEY (and GEOCODING_API_KEY for real address lookup)
 ```
 
-Get a Mistral key at [console.mistral.ai](https://console.mistral.ai/); create a
-Geocoding key (restricted to the Geocoding API) in the
-[Google Cloud console](https://console.cloud.google.com/apis/credentials).
+Edit `.env` and add your Mistral API keys:
 
-### 2. Run
+```env
+# Backend Configuration
+MISTRAL_API_KEY=your_mistral_api_key_here
+MISTRAL_VOX_API_KEY=your_mistral_vox_api_key_here
+
+# Frontend Configuration  
+VITE_API_URL=http://localhost:8000
+```
+
+Get your API keys from: [https://console.mistral.ai/](https://console.mistral.ai/)
+
+### 3. Setup Backend
 
 ```bash
-docker compose up --build
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the backend server
+uvicorn app.main:app --reload
 ```
 
-### 3. Open the app
+The backend will be available at: `http://localhost:8000`
 
-Navigate to **[http://localhost:8080](http://localhost:8080)**.
-API docs are at [http://localhost:8080/docs](http://localhost:8080/docs).
+**API Documentation**: Visit `http://localhost:8000/docs` for interactive Swagger UI
 
-> **iPhone testing:** the compass (device orientation) and reliable geolocation
-> require **HTTPS**. The deployed Cloud Run URL is HTTPS; for local device
-> testing, expose `http://localhost:8080` through a secure tunnel (e.g. ngrok).
+### 4. Setup Frontend
+
+```bash
+# Navigate to frontend directory (in a new terminal)
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+The frontend will be available at: `http://localhost:3000`
+
+### 5. Access the App
+
+Open your browser and navigate to: [http://localhost:3000](http://localhost:3000)
 
 ## 📁 Project Structure
 
@@ -176,28 +231,16 @@ VITE_API_URL=http://localhost:8000
 
 ## 🚢 Deployment
 
-Deployed on **Google Cloud Run** (project `velib-502812`, region `europe-west9`)
-as a single HTTPS container. Cloud Run provides HTTPS automatically, which the
-iOS compass/geolocation APIs require.
-
-### Deploy via Cloud Build
-
-`cloudbuild.yaml` builds the image, pushes it to Artifact Registry, and deploys
-to Cloud Run (the deploy step runs server-side). Mistral and geocoding keys are
-injected from Secret Manager.
+### Using Docker (Recommended)
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml .
+docker-compose up --build
 ```
 
-The Cloud Run service URL is printed on completion. Secrets used:
-`mistral-api-key`, `mistral-vox-api-key`, `geocoding-api-key`.
+### Manual Deployment
 
-### Run the production image locally
-
-```bash
-docker compose up --build   # http://localhost:8080
-```
+1. **Backend**: Deploy the FastAPI app to any Python hosting
+2. **Frontend**: Build with `npm run build` and serve the `dist` folder
 
 ## 🧪 Testing
 
