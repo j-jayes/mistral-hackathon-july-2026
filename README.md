@@ -42,101 +42,42 @@ A beautiful web app for iPhone that helps you find the closest Velib dock with a
 - **Mistral Vox** - Speech-to-text for voice input
 - **Mistral LLM** - Natural language processing for destination extraction
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker Compose)
+
+The app runs as a **single container** — FastAPI serves both the API and the
+built React SPA on one origin, exactly like the deployed Cloud Run image.
 
 ### Prerequisites
 
-- Node.js 18+ (for frontend)
-- Python 3.11+ (for backend)
-- Mistral API keys (optional - has fallback mode)
+- Docker + Docker Compose
+- Mistral API key (optional — voice/LLM fall back to limited mode without it)
+- Google Geocoding API key (optional — address lookup falls back to Paris center without it)
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-repo/velib-parking-guide.git
-cd velib-parking-guide
-```
-
-### 2. Setup Environment Variables
-
-Create `.env` file in the project root:
+### 1. Configure environment
 
 ```bash
 cp .env.example .env
+# edit .env and add MISTRAL_API_KEY (and GEOCODING_API_KEY for real address lookup)
 ```
 
-Edit `.env` and add your Mistral API keys:
+Get a Mistral key at [console.mistral.ai](https://console.mistral.ai/); create a
+Geocoding key (restricted to the Geocoding API) in the
+[Google Cloud console](https://console.cloud.google.com/apis/credentials).
 
-```env
-# Backend Configuration
-MISTRAL_API_KEY=your_mistral_api_key_here
-MISTRAL_VOX_API_KEY=your_mistral_vox_api_key_here
-
-# Frontend Configuration  
-VITE_API_URL=http://localhost:8000
-```
-
-Get your API keys from: [https://console.mistral.ai/](https://console.mistral.ai/)
-
-### 3. Setup Backend
-
-#### Using uv (Recommended)
+### 2. Run
 
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Install dependencies with uv
-uv pip install -r requirements.txt
-
-# Start the backend server with uv
-uv uvicorn app.main:app --reload
+docker compose up --build
 ```
 
-#### Using pip (Alternative)
+### 3. Open the app
 
-```bash
-# Navigate to backend directory
-cd backend
+Navigate to **[http://localhost:8080](http://localhost:8080)**.
+API docs are at [http://localhost:8080/docs](http://localhost:8080/docs).
 
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start the backend server
-uvicorn app.main:app --reload
-```
-
-The backend will be available at: `http://localhost:8000`
-
-**API Documentation**: Visit `http://localhost:8000/docs` for interactive Swagger UI
-
-### 4. Setup Frontend
-
-```bash
-# Navigate to frontend directory (in a new terminal)
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-
-The frontend will be available at: `http://localhost:3000`
-
-### 5. Access the App
-
-Open your browser and navigate to: [http://localhost:3000](http://localhost:3000)
+> **iPhone testing:** the compass (device orientation) and reliable geolocation
+> require **HTTPS**. The deployed Cloud Run URL is HTTPS; for local device
+> testing, expose `http://localhost:8080` through a secure tunnel (e.g. ngrok).
 
 ## 📁 Project Structure
 
@@ -235,16 +176,28 @@ VITE_API_URL=http://localhost:8000
 
 ## 🚢 Deployment
 
-### Using Docker (Recommended)
+Deployed on **Google Cloud Run** (project `velib-502812`, region `europe-west9`)
+as a single HTTPS container. Cloud Run provides HTTPS automatically, which the
+iOS compass/geolocation APIs require.
+
+### Deploy via Cloud Build
+
+`cloudbuild.yaml` builds the image, pushes it to Artifact Registry, and deploys
+to Cloud Run (the deploy step runs server-side). Mistral and geocoding keys are
+injected from Secret Manager.
 
 ```bash
-docker-compose up --build
+gcloud builds submit --config cloudbuild.yaml .
 ```
 
-### Manual Deployment
+The Cloud Run service URL is printed on completion. Secrets used:
+`mistral-api-key`, `mistral-vox-api-key`, `geocoding-api-key`.
 
-1. **Backend**: Deploy the FastAPI app to any Python hosting
-2. **Frontend**: Build with `npm run build` and serve the `dist` folder
+### Run the production image locally
+
+```bash
+docker compose up --build   # http://localhost:8080
+```
 
 ## 🧪 Testing
 
