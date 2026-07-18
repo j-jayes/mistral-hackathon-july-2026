@@ -1,76 +1,53 @@
-# Multi-stage Dockerfile for Velib Parking Guide
-# Builds both frontend and backend
+# Multi-stage Dockerfile for Velib Parking Guide (single-container Cloud Run deploy)
+# Stage 1 builds the React SPA; stage 2 serves it + the FastAPI API from one origin.
 
-# ==================== Backend Stage ====================
-FROM python:3.11-slim as backend
+# ==================== Frontend build stage ====================
+FROM node:20-slim AS frontend
 
-# Set working directory
-WORKDIR /app
+WORKDIR /fe
 
-# Copy backend requirements
-COPY backend/requirements.txt .
+# Install deps first for better layer caching.
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci || npm install
 
-# Install dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Build the SPA. VITE_API_URL="" makes the app call its own origin (relative /api),
+# which is correct for the single-container deployment. Baked in at build time.
+COPY frontend/ ./
+ENV VITE_API_URL=""
+RUN npm run build   # outputs to /fe/build (vite build.outDir)
 
-# Copy backend code
-COPY backend/ ./backend/
+# ==================== Runtime stage ====================
+FROM python:3.11-slim AS final
 
-# Install backend as package
-RUN cd backend && pip install --no-cache-dir --user -e .
-
-# ==================== Frontend Stage ====================
-FROM node:20-alpine as frontend
-
-# Set working directory
-WORKDIR /app
-
-# Install frontend dependencies
-COPY frontend/package.json frontend/package-lock.json* ./frontend/
-RUN cd frontend && npm ci
-
-# Copy frontend code
-COPY frontend/ ./frontend/
-
-# Build frontend
-RUN cd frontend && npm run build
-
-# ==================== Final Stage ====================
-FROM python:3.11-slim as final
-
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    SERVE_FRONTEND=true \
+    FRONTEND_BUILD_DIR=/app/frontend/build \
+    DEBUG=false
 
-# Install system dependencies for running the app
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+# curl for the healthcheck.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy backend from backend stage
-COPY --from=backend /root/.local /root/.local
-COPY --from=backend /app /app
+# Python deps.
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+# Backend source (a proper package: backend.app.main:app).
+COPY backend/ ./backend/
 
-# Copy built frontend from frontend stage
-COPY --from=frontend /app/frontend/build ./frontend/build
+# Built SPA from stage 1 -> matches FRONTEND_BUILD_DIR above.
+COPY --from=frontend /fe/build ./frontend/build
 
-# Copy environment files
-COPY .env.example .
+# Cloud Run provides $PORT (defaults to 8080); honor it.
+EXPOSE 8080
 
-# Expose ports
-EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f "http://localhost:${PORT:-8080}/api/health" || exit 1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
-
-# Run the application
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so ${PORT} expands; exec so uvicorn gets SIGTERM directly.
+CMD exec uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8080}

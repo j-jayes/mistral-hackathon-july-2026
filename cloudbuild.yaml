@@ -1,0 +1,56 @@
+# Build the single-container image, push to Artifact Registry, and deploy to
+# Cloud Run. The deploy runs server-side in the cloud-sdk builder (local
+# `gcloud run` is broken by a missing grpc module), sidestepping that issue.
+#
+# Submit with:
+#   gcloud builds submit --config cloudbuild.yaml .
+
+substitutions:
+  _REGION: europe-west9
+  _REPO: velib
+  _SERVICE: velib-app
+
+steps:
+  # 1) Build the image (tag with the unique build id + latest).
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$BUILD_ID
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+
+  # 2) Push all tags to Artifact Registry.
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  # 3) Deploy to Cloud Run (server-side gcloud, where grpc works).
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$BUILD_ID
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=4
+      - --set-env-vars=DEBUG=false,SERVE_FRONTEND=true,ALLOWED_ORIGINS=*
+      - --set-secrets=MISTRAL_API_KEY=mistral-api-key:latest,MISTRAL_VOX_API_KEY=mistral-vox-api-key:latest,GEOCODING_API_KEY=geocoding-api-key:latest
+
+timeout: 1800s
+
+options:
+  logging: CLOUD_LOGGING_ONLY
