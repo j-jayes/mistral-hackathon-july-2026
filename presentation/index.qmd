@@ -1,5 +1,217 @@
 ---
-title: "Untitled"
-format: html
+title: "Parking the Vélib is the hard part"
+subtitle: "A phone compass to the nearest dock with a free spot — Paris"
+author: "Jonathan Jayes"
+format:
+  revealjs:
+    theme: [default, theme.scss]
+    slide-number: true
+    progress: true
+    transition: fade
+    width: 1200
+    height: 720
+    hash: true
+    header-includes: |
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 ---
 
+## The ride is easy — landing a free dock isn't {background-color="#fcfcfc"}
+
+::: {.columns}
+::: {.column width="58%"}
+- I cross Paris by **Vélib** almost daily.
+- The bike is trivial. **Parking it is the gamble** — the closest station to my destination is often **full**.
+- I want one answer, on my phone: *which nearby station has an open dock, and which way is it?*
+
+<span class="chip">GOAL</span> &nbsp; A compass needle → nearest station **with a free dock**.
+:::
+::: {.column width="42%"}
+![](assets/cat.gif){width="90%" style="border-radius:12px;"}
+
+<span class="muted" style="font-size:.6em">…me, after circling the block three times.</span>
+:::
+:::
+
+## Two feeds answer one question: *where's the nearest open dock?*
+
+::: {.cards}
+::: {.card}
+#### 🚲 Vélib Métropole (GBFS)
+Live **station status** — position, capacity, **docks available** right now.
+
+<span class="muted">Public GBFS feed · refreshed on the client · demo ships 20 stations offline.</span>
+:::
+::: {.card}
+#### 📍 Google Geocoding
+Turns a typed/spoken **address → coordinates** (`lat, lng`).
+
+<span class="muted">The *only* server call. Key restricted to the Geocoding API.</span>
+:::
+:::
+
+<br>
+
+> Everything else — distance, bearing, "which is nearest" — is **arithmetic on two coordinate lists**.
+
+## The phone does the math; the server only geocodes
+
+```{mermaid}
+flowchart LR
+  A["📱 iPhone (React SPA)"] -->|"address string"| B["FastAPI /api/location/geocode"]
+  B -->|"lat, lng"| A
+  A -->|"haversine + bearing<br/>vs. 20 stations"| A
+  A -->|"webkitCompassHeading"| N["🧭 needle = bearing − heading"]
+  subgraph Client [runs entirely on device]
+    A
+    N
+  end
+  style Client fill:#DEEBF7,stroke:#2b8cbe
+```
+
+::: {style="font-size:.7em"}
+Only the **address** leaves the phone. Nearest-dock selection and the compass are **client-side** — fast, and private by construction.
+:::
+
+## Nearest free dock to *21 rue des Gravilliers* — computed live
+
+<div id="pmap" style="height:520px; border-radius:10px; border:1px solid #e6e6e6;"></div>
+
+```{=html}
+<script>
+(function () {
+  var stations = [{"name":"Gare de Lyon","lat":48.8442,"lng":2.3732},{"name":"Châtelet - Les Halles","lat":48.8586,"lng":2.3463},{"name":"Notre-Dame","lat":48.8534,"lng":2.3488},{"name":"Saint-Michel","lat":48.852,"lng":2.3455},{"name":"Louvre - Rivoli","lat":48.8606,"lng":2.3376},{"name":"Pigalle","lat":48.8841,"lng":2.3417},{"name":"Montparnasse","lat":48.8423,"lng":2.3231},{"name":"Opéra Garnier","lat":48.8719,"lng":2.3515},{"name":"Gare du Nord","lat":48.8808,"lng":2.355},{"name":"Eiffel Tower","lat":48.8584,"lng":2.2945},{"name":"Luxembourg","lat":48.8467,"lng":2.3374},{"name":"République","lat":48.8692,"lng":2.363},{"name":"Bastille","lat":48.8534,"lng":2.369},{"name":"Marais - Saint-Paul","lat":48.8545,"lng":2.3636},{"name":"Le Marais - Rambuteau","lat":48.862,"lng":2.358},{"name":"Les Invalides","lat":48.8611,"lng":2.3125},{"name":"Arc de Triomphe","lat":48.8738,"lng":2.295},{"name":"Père Lachaise","lat":48.8686,"lng":2.3934},{"name":"Buttes-Chaumont","lat":48.8858,"lng":2.3886},{"name":"Bercy","lat":48.8358,"lng":2.3789}];
+  var dest = {name:"21 rue des Gravilliers", lat:48.8615, lng:2.3636};
+
+  function haversine(a, b) {
+    var R=6371000, toRad=Math.PI/180;
+    var dLat=(b.lat-a.lat)*toRad, dLng=(b.lng-a.lng)*toRad;
+    var s=Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(a.lat*toRad)*Math.cos(b.lat*toRad)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2*R*Math.asin(Math.sqrt(s));
+  }
+
+  var map, built=false;
+  function build() {
+    if (built || typeof L === "undefined" || !document.getElementById("pmap")) return;
+    built = true;
+    map = L.map("pmap", {scrollWheelZoom:false}).setView([dest.lat, dest.lng], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {attribution:"© OpenStreetMap", maxZoom:19}).addTo(map);
+
+    var nearest=null, best=Infinity;
+    stations.forEach(function(s){ var d=haversine(dest,s); if(d<best){best=d; nearest=s;} });
+
+    stations.forEach(function(s){
+      var isNear = s===nearest;
+      L.circleMarker([s.lat,s.lng], {
+        radius:isNear?11:6,
+        color:isNear?"#469408":"#2b8cbe",
+        weight:isNear?3:1, fillColor:isNear?"#469408":"#2b8cbe",
+        fillOpacity:isNear?0.9:0.55
+      }).addTo(map).bindTooltip(s.name + (isNear?" — nearest ("+Math.round(best)+" m)":""));
+    });
+
+    L.marker([dest.lat,dest.lng]).addTo(map)
+      .bindTooltip("🎯 " + dest.name, {permanent:true, direction:"top"});
+    L.polyline([[dest.lat,dest.lng],[nearest.lat,nearest.lng]],
+      {color:"#469408", weight:3, dashArray:"6 6"}).addTo(map);
+
+    setTimeout(function(){ map.invalidateSize(); }, 200);
+  }
+
+  if (document.readyState !== "loading") build();
+  else document.addEventListener("DOMContentLoaded", build);
+  if (window.Reveal) {
+    Reveal.on("ready", function(){ build(); if(map) map.invalidateSize(); });
+    Reveal.on("slidechanged", function(){ build(); if(map) setTimeout(function(){map.invalidateSize();},150); });
+  }
+})();
+</script>
+```
+
+::: {style="font-size:.6em"}
+🟢 nearest open dock · 🔵 other stations · 🎯 destination. Same haversine that runs on the phone.
+:::
+
+## iOS hides true north behind a **tap** and **HTTPS**
+
+::: {.columns}
+::: {.column width="52%"}
+```js
+// Must be called *inside* a user gesture (a button tap)
+await DeviceOrientationEvent.requestPermission();
+
+function onOrient(e) {
+  // iOS: this is TRUE north, clockwise.
+  // NOT e.alpha (relative + inverted).
+  const heading = e.webkitCompassHeading
+                ?? (360 - e.alpha);   // Android
+}
+```
+:::
+::: {.column width="48%"}
+Three ways to silently get **nothing**:
+
+- ❌ **No HTTPS** → sensors + geolocation blocked.
+- ❌ **On page load** → prompt ignored; needs a **tap**.
+- ❌ **`alpha`** → arbitrary origin on iOS. Use **`webkitCompassHeading`**.
+
+<span class="chip">FIX</span> "Enable Compass" button → `requestPermission()` → read `webkitCompassHeading`.
+:::
+:::
+
+## One container on Cloud Run buys HTTPS for free
+
+```{mermaid}
+flowchart LR
+  S["git push"] --> CB["Cloud Build"]
+  CB --> IMG["Artifact Registry<br/>single image"]
+  IMG --> CR["Cloud Run<br/>europe-west9 · HTTPS"]
+  CR --> P["📱 *.run.app"]
+  SM["Secret Manager<br/>Mistral · Geocoding"] -.-> CR
+  style CR fill:#DEEBF7,stroke:#2b8cbe
+```
+
+::: {style="font-size:.68em"}
+**One image**: FastAPI serves the built React SPA *and* the API on one origin → no CORS, and **`*.run.app` is HTTPS by default** — exactly what the iOS compass needs. Keys stay in Secret Manager.
+:::
+
+## Type it, speak it, or hit **demo** — then follow the needle
+
+::: {.columns}
+::: {.column width="55%"}
+- 🎙️ **Voice** → Mistral Vox → Mistral LLM extracts the address.
+- ⌨️ **Type** it in the collapsible sidebar.
+- ✨ **Demo** → routes to *21 rue des Gravilliers* in one tap.
+- 🧭 **Compass** points to the nearest open dock; tap **Parked** to flip it toward your destination.
+
+<span class="muted" style="font-size:.7em">Live, high-accuracy geolocation via `watchPosition`.</span>
+:::
+::: {.column width="45%"}
+<iframe src="https://velib-app-c3eayx2yta-od.a.run.app"
+        style="width:360px; height:640px; border:10px solid #222; border-radius:34px; background:#fff;"
+        loading="lazy"></iframe>
+:::
+:::
+
+## Live now — and only the address ever leaves the phone
+
+::: {.columns}
+::: {.column width="60%"}
+**Shipped**
+
+- Single-container app on **Cloud Run**, HTTPS · [velib-app…run.app](https://velib-app-c3eayx2yta-od.a.run.app)
+- Real geocoding, working **iOS compass**, voice + typed + demo input.
+
+**Next**
+
+- Swap the 20-station demo set for the **live GBFS** feed.
+- Route-aware ranking (walk time, not just crow-flies).
+- Installable **PWA** + offline tiles.
+:::
+::: {.column width="40%"}
+![](assets/cat-2.gif){width="95%" style="border-radius:12px;"}
+
+<span class="muted" style="font-size:.6em">Merci — questions?</span>
+:::
+:::

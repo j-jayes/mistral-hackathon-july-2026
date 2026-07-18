@@ -1,0 +1,53 @@
+/*-- scss:defaults --*/
+
+// Match the app / homepage "simplex" look
+$body-bg: #fcfcfc;
+$body-color: #404040;
+$link-color: #2b8cbe;
+$selection-bg: #DEEBF7;
+
+$font-family-sans-serif: "Lato", -apple-system, "Segoe UI", sans-serif;
+$presentation-font-size-root: 30px;
+
+$presentation-heading-font: "Noto Serif JP", Georgia, serif;
+$presentation-heading-color: #2b8cbe;
+$presentation-heading-font-weight: 300;
+$presentation-title-slide-text-align: left;
+
+$code-block-font-size: 0.62em;
+$code-block-bg: #f4f7f9;
+
+/*-- scss:rules --*/
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Lato:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@300;400&display=swap');
+
+.reveal h1, .reveal h2, .reveal h3 { letter-spacing: -0.01em; line-height: 1.15; }
+.reveal code, .reveal pre { font-family: "IBM Plex Mono", monospace; }
+
+// Accent primitives
+.chip {
+  display: inline-block;
+  padding: .15em .6em;
+  border-radius: 999px;
+  background: #DEEBF7;
+  color: #1c5f80;
+  font-size: .5em;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.muted { color: #777; }
+.big-num { font-family: "IBM Plex Mono", monospace; color: #2b8cbe; font-weight: 700; }
+
+// Simple two-column card grid
+.cards { display: flex; gap: 1rem; }
+.card {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.card h4 { margin: 0 0 .3rem 0; color: #2b8cbe; font-weight: 400; }
+
+.reveal .slide-number { background: #2b8cbe; }
