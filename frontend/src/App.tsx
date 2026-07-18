@@ -351,7 +351,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] ios-safe-area-top">
+      <div className="min-h-screen app-bg text-foreground ios-safe-area-top">
         {/* Loading Overlay */}
         {loading && <LoadingSpinner className="fixed inset-0 z-50" />}
         

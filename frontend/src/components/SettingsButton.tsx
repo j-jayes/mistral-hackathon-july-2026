@@ -9,9 +9,9 @@ export default function SettingsButton({ onClick, className = '' }: SettingsButt
   return (
     <button
       onClick={onClick}
-      className={`w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors ${className}`}
+      className={`w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-primary hover:bg-secondary transition-colors btn-raised ${className}`}
     >
-      <Settings className="w-6 h-6 text-white" />
+      <Settings className="w-5 h-5" />
     </button>
   );
 }

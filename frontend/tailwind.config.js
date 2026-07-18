@@ -16,12 +16,19 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Lato', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['"Noto Serif JP"', 'Georgia', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        heading: ['"Noto Serif JP"', 'Georgia', 'serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        success: "hsl(var(--success))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

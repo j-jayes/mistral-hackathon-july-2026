@@ -178,18 +178,18 @@ export default function HomePage({
       <main className="flex-1 flex flex-col items-center justify-center px-4 pb-28 relative overflow-y-auto">
         {/* Status Message */}
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <h2 className="text-xl font-semibold text-white/90">
+          <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
+            <h2 className="text-lg font-medium text-foreground">
               {getStatusMessage()}
             </h2>
-            
+
             {/* Last Updated Badge */}
-            <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white/70">
+            <div className="inline-flex items-center gap-1 bg-card border border-border rounded-full px-3 py-1 text-xs text-muted-foreground">
               <Clock className="w-3 h-3" />
               <span>{lastUpdated}</span>
             </div>
           </div>
-          
+
           {/* Refresh Button */}
           <div className="mb-4">
             <Button
@@ -197,25 +197,25 @@ export default function HomePage({
               size="sm"
               onClick={onRefreshStations}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </Button>
           </div>
-          
+
           {/* Parked Status */}
           {isParked && (
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-white">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
+              <span className="w-2 h-2 bg-success rounded-full"></span>
               <span>Parked! Compass pointing to destination</span>
             </div>
           )}
-          
+
           {/* Not Parked Status */}
           {!isParked && selectedStation && (
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-white">
-              <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
               <span>Heading to station with available docks</span>
             </div>
           )}
@@ -231,10 +231,7 @@ export default function HomePage({
 
           {/* Distance Display (centered in compass) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <DistanceDisplay
-              distance={targetDistance}
-              className="text-2xl font-bold text-white drop-shadow-lg"
-            />
+            <DistanceDisplay distance={targetDistance} />
           </div>
         </div>
 
@@ -250,7 +247,7 @@ export default function HomePage({
               <Navigation className="w-5 h-5" />
               <span>Enable Compass</span>
             </Button>
-            <p className="text-xs text-white/70 max-w-[16rem] text-center">
+            <p className="text-xs text-muted-foreground max-w-[16rem] text-center">
               {compassPermission === 'denied'
                 ? 'Compass access was blocked. Enable Motion & Orientation in Safari settings, then tap again.'
                 : 'Tap to allow motion and orientation so the needle can point the way.'}
@@ -260,22 +257,22 @@ export default function HomePage({
 
         {/* Target Info */}
         {selectedStation && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-8 w-full max-w-md">
+          <div className="bg-card border border-border rounded-xl p-4 mb-8 w-full max-w-md shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 text-xl">🚲</span>
+              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                <span className="text-xl">🚲</span>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white">{selectedStation.name}</h3>
-                <p className="text-sm text-white/70">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground truncate">{selectedStation.name}</h3>
+                <p className="text-sm text-muted-foreground">
                   {selectedStation.status.num_docks_available} docks available
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-white">
+                <p className="font-mono text-xl font-bold text-primary tabular-nums">
                   {formatDistance(targetDistance)}
                 </p>
-                <p className="text-xs text-white/60">
+                <p className="font-mono text-xs text-muted-foreground">
                   {targetDirection !== null ? getDirectionName(targetDirection) : '--'}
                 </p>
               </div>
@@ -284,14 +281,14 @@ export default function HomePage({
         )}
 
         {destination && !isParked && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-8 w-full max-w-md">
+          <div className="bg-card border border-border rounded-xl p-4 mb-8 w-full max-w-md shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 text-xl">🎯</span>
+              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                <span className="text-xl">🎯</span>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-white">{destination.address}</h3>
-                <p className="text-sm text-white/70">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground truncate">{destination.address}</h3>
+                <p className="text-sm text-muted-foreground">
                   Destination set
                 </p>
               </div>

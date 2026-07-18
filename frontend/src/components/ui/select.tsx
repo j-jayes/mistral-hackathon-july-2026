@@ -60,7 +60,7 @@ export function Select({ value, onValueChange, children }: SelectProps) {
     <select
       className={cn(
         'flex h-10 w-full items-center rounded-md border border-input bg-white px-3 py-2 text-sm',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
       value={value}
       onChange={(e) => onValueChange?.(e.target.value)}

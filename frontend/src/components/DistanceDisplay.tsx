@@ -9,8 +9,8 @@ export default function DistanceDisplay({
 
   return (
     <div className={`text-center ${className}`}>
-      <div className="bg-purple-600/90 backdrop-blur-sm rounded-xl px-6 py-3">
-        <span className="text-3xl font-bold text-white drop-shadow-lg">
+      <div className="bg-primary rounded-xl px-6 py-3 shadow-md">
+        <span className="font-mono text-3xl font-bold text-primary-foreground tabular-nums">
           {displayText}
         </span>
       </div>
