@@ -11,8 +11,9 @@ import VoiceInputButton from '@/components/VoiceInputButton';
 import StationList from '@/components/StationList';
 import Header from '@/components/Header';
 import SettingsButton from '@/components/SettingsButton';
+import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Clock, Navigation } from 'lucide-react';
+import { RefreshCw, Clock, Navigation, Menu } from 'lucide-react';
 
 interface HomePageProps {
   currentLocation: Location | null;
@@ -27,6 +28,8 @@ interface HomePageProps {
   isRefreshing: boolean;
   compassPermission: CompassPermission;
   onEnableCompass: () => void;
+  onSetDestination: (address: string) => void;
+  onDemoMode: () => void;
   onVoiceResult: (result: ProcessingResult) => void;
   onToggleParked: () => void;
   onSelectStation: (station: VelibStation) => void;
@@ -47,6 +50,8 @@ export default function HomePage({
   isRefreshing,
   compassPermission,
   onEnableCompass,
+  onSetDestination,
+  onDemoMode,
   onVoiceResult,
   onToggleParked,
   onSelectStation,
@@ -55,6 +60,7 @@ export default function HomePage({
 }: HomePageProps) {
   const navigate = useNavigate();
   const [showStations, setShowStations] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   // Compass size adapts to the viewport so it fits small screens without
   // colliding with the status text or the bottom control bar.
@@ -169,9 +175,27 @@ export default function HomePage({
       <Header
         title="🚲 Velib Parking Guide"
         subtitle={getSubStatusMessage()}
+        leftContent={
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center text-primary hover:bg-secondary transition-colors btn-raised"
+            aria-label="Open destination menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        }
         rightContent={
           <SettingsButton onClick={handleSettingsClick} />
         }
+      />
+
+      {/* Collapsible sidebar: typed destination + demo mode */}
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onSetDestination={onSetDestination}
+        onDemo={onDemoMode}
+        currentDestination={destination?.address ?? null}
       />
 
       {/* Main Content */}

@@ -204,6 +204,7 @@ export interface HeaderProps {
   title: string;
   subtitle?: string;
   rightContent?: React.ReactNode;
+  leftContent?: React.ReactNode;
 }
 
 export interface LoadingSpinnerProps {
