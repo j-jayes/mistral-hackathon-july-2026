@@ -1,6 +1,6 @@
 ---
 title: "Parking the Vélib is the hard part"
-subtitle: "A phone compass to the nearest dock with a free spot — Paris"
+subtitle: "A phone compass that points to the nearest dock with a free spot — Paris"
 author: "Jonathan Jayes"
 format:
   revealjs:
@@ -8,53 +8,51 @@ format:
     slide-number: true
     progress: true
     transition: fade
-    width: 1200
-    height: 720
+    width: 1600
+    height: 900
     hash: true
     header-includes: |
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 ---
 
-## The ride is easy — landing a free dock isn't {background-color="#fcfcfc"}
+## Where this started {background-color="#fcfcfc"}
 
 ::: {.columns}
-::: {.column width="58%"}
-- I cross Paris by **Vélib** almost daily.
-- The bike is trivial. **Parking it is the gamble** — the closest station to my destination is often **full**.
-- I want one answer, on my phone: *which nearby station has an open dock, and which way is it?*
 
-<span class="chip">GOAL</span> &nbsp; A compass needle → nearest station **with a free dock**.
+::: {.column width="58%"}
+I cross Paris by Vélib almost daily, and the riding is the easy part. The gamble is parking. The station nearest to wherever I'm going is so often full that I end up circling the block, hunting for an open dock.
+
+What I really wanted was one answer on my phone: which station near me has a free dock right now, and which way do I walk to reach it?
 :::
+
 ::: {.column width="42%"}
 ![](assets/cat.gif){width="90%" style="border-radius:12px;"}
 
 <span class="muted" style="font-size:.6em">…me, after circling the block three times.</span>
 :::
+
 :::
 
-## Two feeds answer one question: *where's the nearest open dock?*
+## It turns out I only need two feeds
 
-::: {.cards}
-::: {.card}
-#### 🚲 Vélib Métropole (GBFS)
-Live **station status** — position, capacity, **docks available** right now.
+Once I framed it as a question about coordinates, the whole thing got small. I need to know where the open docks are, and I need to know where the person is standing.
 
-<span class="muted">Public GBFS feed · refreshed on the client · demo ships 20 stations offline.</span>
-:::
-::: {.card}
-#### 📍 Google Geocoding
-Turns a typed/spoken **address → coordinates** (`lat, lng`).
+::: {.columns}
 
-<span class="muted">The *only* server call. Key restricted to the Geocoding API.</span>
-:::
+::: {.column width="50%"}
+The first feed is Vélib Métropole's public GBFS status — every station's position, capacity, and how many docks are open at this moment. For the demo I ship twenty stations offline so nothing breaks on stage.
 :::
 
-<br>
+::: {.column width="50%"}
+The second is Google's Geocoding API, which turns a typed or spoken address into a `lat, lng` pair. That is the only call that leaves the phone, and the key is restricted to geocoding alone.
+:::
 
-> Everything else — distance, bearing, "which is nearest" — is **arithmetic on two coordinate lists**.
+:::
 
-## The phone does the math; the server only geocodes
+Everything else — distance, bearing, which station is nearest — is just arithmetic on two lists of coordinates.
+
+## The phone does the arithmetic; the server only geocodes
 
 ```{mermaid}
 flowchart LR
@@ -70,12 +68,12 @@ flowchart LR
 ```
 
 ::: {style="font-size:.7em"}
-Only the **address** leaves the phone. Nearest-dock selection and the compass are **client-side** — fast, and private by construction.
+The only thing that ever leaves the phone is the address I type. Choosing the nearest dock and turning the compass both happen on the device, which keeps it fast and, almost by accident, private.
 :::
 
-## Nearest free dock to *21 rue des Gravilliers* — computed live
+## Finding the nearest free dock, computed live
 
-<div id="pmap" style="height:520px; border-radius:10px; border:1px solid #e6e6e6;"></div>
+<div id="pmap" style="height:640px; border-radius:10px; border:1px solid #e6e6e6;"></div>
 
 ```{=html}
 <script>
@@ -130,12 +128,13 @@ Only the **address** leaves the phone. Nearest-dock selection and the compass ar
 ```
 
 ::: {style="font-size:.6em"}
-🟢 nearest open dock · 🔵 other stations · 🎯 destination. Same haversine that runs on the phone.
+Destination 21 rue des Gravilliers, green is the nearest open dock, blue the rest. This is the same haversine that runs on the phone.
 :::
 
-## iOS hides true north behind a **tap** and **HTTPS**
+## Getting a true-north compass out of an iPhone
 
 ::: {.columns}
+
 ::: {.column width="52%"}
 ```js
 // Must be called *inside* a user gesture (a button tap)
@@ -149,18 +148,16 @@ function onOrient(e) {
 }
 ```
 :::
+
 ::: {.column width="48%"}
-Three ways to silently get **nothing**:
+This was the part that quietly cost me an afternoon. There are three ways to get nothing at all: without HTTPS the sensors and geolocation are blocked outright; ask for permission on page load and the prompt is simply ignored, because iOS needs a real tap; and if you read `e.alpha` you get an arbitrary origin instead of north.
 
-- ❌ **No HTTPS** → sensors + geolocation blocked.
-- ❌ **On page load** → prompt ignored; needs a **tap**.
-- ❌ **`alpha`** → arbitrary origin on iOS. Use **`webkitCompassHeading`**.
-
-<span class="chip">FIX</span> "Enable Compass" button → `requestPermission()` → read `webkitCompassHeading`.
-:::
+The fix that finally worked was an "Enable Compass" button that calls `requestPermission()` on the tap, and then reads `webkitCompassHeading`.
 :::
 
-## One container on Cloud Run buys HTTPS for free
+:::
+
+## One container on Cloud Run, and HTTPS comes free
 
 ```{mermaid}
 flowchart LR
@@ -173,45 +170,41 @@ flowchart LR
 ```
 
 ::: {style="font-size:.68em"}
-**One image**: FastAPI serves the built React SPA *and* the API on one origin → no CORS, and **`*.run.app` is HTTPS by default** — exactly what the iOS compass needs. Keys stay in Secret Manager.
+I package everything as one image: FastAPI serves both the built React app and the API from a single origin, so there is no CORS to fight, and every `*.run.app` URL is HTTPS by default — which is exactly what the iPhone compass was insisting on. The keys stay in Secret Manager.
 :::
 
-## Type it, speak it, or hit **demo** — then follow the needle
+## Three ways in, then you just follow the needle
 
 ::: {.columns}
-::: {.column width="55%"}
-- 🎙️ **Voice** → Mistral Vox → Mistral LLM extracts the address.
-- ⌨️ **Type** it in the collapsible sidebar.
-- ✨ **Demo** → routes to *21 rue des Gravilliers* in one tap.
-- 🧭 **Compass** points to the nearest open dock; tap **Parked** to flip it toward your destination.
 
-<span class="muted" style="font-size:.7em">Live, high-accuracy geolocation via `watchPosition`.</span>
+::: {.column width="55%"}
+You can reach a destination three ways. Speak it, and Mistral Vox transcribes while a Mistral model pulls the address out of what you said. Type it into the collapsible sidebar. Or hit demo, which drops you at 21 rue des Gravilliers in a single tap.
+
+From there the compass points at the nearest open dock, and once you've parked, a tap on "Parked" flips the needle toward your actual destination. Your position updates live through `watchPosition`.
 :::
+
 ::: {.column width="45%"}
 <iframe src="https://velib-app-c3eayx2yta-od.a.run.app"
         style="width:360px; height:640px; border:10px solid #222; border-radius:34px; background:#fff;"
         loading="lazy"></iframe>
 :::
+
 :::
 
-## Live now — and only the address ever leaves the phone
+## Where it stands, and what's next
 
 ::: {.columns}
+
 ::: {.column width="60%"}
-**Shipped**
+It's live today: a single container on Cloud Run, served over HTTPS at [velib-app…run.app](https://velib-app-c3eayx2yta-od.a.run.app), with real geocoding, a working iOS compass, and voice, typed, and demo input all in place.
 
-- Single-container app on **Cloud Run**, HTTPS · [velib-app…run.app](https://velib-app-c3eayx2yta-od.a.run.app)
-- Real geocoding, working **iOS compass**, voice + typed + demo input.
-
-**Next**
-
-- Swap the 20-station demo set for the **live GBFS** feed.
-- Route-aware ranking (walk time, not just crow-flies).
-- Installable **PWA** + offline tiles.
+What I'd reach for next is swapping the twenty-station demo set for the live GBFS feed, ranking docks by walking time rather than straight-line distance, and turning it into an installable app with offline map tiles.
 :::
+
 ::: {.column width="40%"}
 ![](assets/cat-2.gif){width="95%" style="border-radius:12px;"}
 
 <span class="muted" style="font-size:.6em">Merci — questions?</span>
 :::
+
 :::

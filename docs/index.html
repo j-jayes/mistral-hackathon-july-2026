@@ -199,7 +199,7 @@
 
 <section id="title-slide" class="quarto-title-block center">
   <h1 class="title">Parking the Vélib is the hard part</h1>
-  <p class="subtitle">A phone compass to the nearest dock with a free spot — Paris</p>
+  <p class="subtitle">A phone compass that points to the nearest dock with a free spot — Paris</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -210,42 +210,30 @@ Jonathan Jayes
 </div>
 
 </section>
-<section id="the-ride-is-easy-landing-a-free-dock-isnt" class="slide level2" data-background-color="#fcfcfc">
-<h2>The ride is easy — landing a free dock isn’t</h2>
+<section id="where-this-started" class="slide level2" data-background-color="#fcfcfc">
+<h2>Where this started</h2>
 <div class="columns">
 <div class="column" style="width:58%;">
-<ul>
-<li>I cross Paris by <strong>Vélib</strong> almost daily.</li>
-<li>The bike is trivial. <strong>Parking it is the gamble</strong> — the closest station to my destination is often <strong>full</strong>.</li>
-<li>I want one answer, on my phone: <em>which nearby station has an open dock, and which way is it?</em></li>
-</ul>
-<p><span class="chip">GOAL</span> &nbsp; A compass needle → nearest station <strong>with a free dock</strong>.</p>
+<p>I cross Paris by Vélib almost daily, and the riding is the easy part. The gamble is parking. The station nearest to wherever I’m going is so often full that I end up circling the block, hunting for an open dock.</p>
+<p>What I really wanted was one answer on my phone: which station near me has a free dock right now, and which way do I walk to reach it?</p>
 </div><div class="column" style="width:42%;">
 <p><img data-src="assets/cat.gif" style="border-radius:12px;;width:90.0%"></p>
 <p><span class="muted" style="font-size:.6em">…me, after circling the block three times.</span></p>
 </div></div>
 </section>
-<section id="two-feeds-answer-one-question-wheres-the-nearest-open-dock" class="slide level2">
-<h2>Two feeds answer one question: <em>where’s the nearest open dock?</em></h2>
-<div class="cards">
-<section id="vélib-métropole-gbfs" class="card">
-<h4>🚲 Vélib Métropole (GBFS)</h4>
-<p>Live <strong>station status</strong> — position, capacity, <strong>docks available</strong> right now.</p>
-<p><span class="muted">Public GBFS feed · refreshed on the client · demo ships 20 stations offline.</span></p>
+<section id="it-turns-out-i-only-need-two-feeds" class="slide level2">
+<h2>It turns out I only need two feeds</h2>
+<p>Once I framed it as a question about coordinates, the whole thing got small. I need to know where the open docks are, and I need to know where the person is standing.</p>
+<div class="columns">
+<div class="column" style="width:50%;">
+<p>The first feed is Vélib Métropole’s public GBFS status — every station’s position, capacity, and how many docks are open at this moment. For the demo I ship twenty stations offline so nothing breaks on stage.</p>
+</div><div class="column" style="width:50%;">
+<p>The second is Google’s Geocoding API, which turns a typed or spoken address into a <code>lat, lng</code> pair. That is the only call that leaves the phone, and the key is restricted to geocoding alone.</p>
+</div></div>
+<p>Everything else — distance, bearing, which station is nearest — is just arithmetic on two lists of coordinates.</p>
 </section>
-<section id="google-geocoding" class="card">
-<h4>📍 Google Geocoding</h4>
-<p>Turns a typed/spoken <strong>address → coordinates</strong> (<code>lat, lng</code>).</p>
-<p><span class="muted">The <em>only</em> server call. Key restricted to the Geocoding API.</span></p>
-</section>
-</div>
-<p><br></p>
-<blockquote>
-<p>Everything else — distance, bearing, “which is nearest” — is <strong>arithmetic on two coordinate lists</strong>.</p>
-</blockquote>
-</section>
-<section id="the-phone-does-the-math-the-server-only-geocodes" class="slide level2">
-<h2>The phone does the math; the server only geocodes</h2>
+<section id="the-phone-does-the-arithmetic-the-server-only-geocodes" class="slide level2">
+<h2>The phone does the arithmetic; the server only geocodes</h2>
 <div class="cell" data-reveal="true" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -268,12 +256,12 @@ Jonathan Jayes
 </div>
 </div>
 <div style="font-size:.7em">
-<p>Only the <strong>address</strong> leaves the phone. Nearest-dock selection and the compass are <strong>client-side</strong> — fast, and private by construction.</p>
+<p>The only thing that ever leaves the phone is the address I type. Choosing the nearest dock and turning the compass both happen on the device, which keeps it fast and, almost by accident, private.</p>
 </div>
 </section>
-<section id="nearest-free-dock-to-21-rue-des-gravilliers-computed-live" class="slide level2">
-<h2>Nearest free dock to <em>21 rue des Gravilliers</em> — computed live</h2>
-<div id="pmap" style="height:520px; border-radius:10px; border:1px solid #e6e6e6;">
+<section id="finding-the-nearest-free-dock-computed-live" class="slide level2">
+<h2>Finding the nearest free dock, computed live</h2>
+<div id="pmap" style="height:640px; border-radius:10px; border:1px solid #e6e6e6;">
 
 </div>
 <script>
@@ -326,11 +314,11 @@ Jonathan Jayes
 })();
 </script>
 <div style="font-size:.6em">
-<p>🟢 nearest open dock · 🔵 other stations · 🎯 destination. Same haversine that runs on the phone.</p>
+<p>Destination 21 rue des Gravilliers, green is the nearest open dock, blue the rest. This is the same haversine that runs on the phone.</p>
 </div>
 </section>
-<section id="ios-hides-true-north-behind-a-tap-and-https" class="slide level2">
-<h2>iOS hides true north behind a <strong>tap</strong> and <strong>HTTPS</strong></h2>
+<section id="getting-a-true-north-compass-out-of-an-iphone" class="slide level2">
+<h2>Getting a true-north compass out of an iPhone</h2>
 <div class="columns">
 <div class="column" style="width:52%;">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource js number-lines code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href=""></a><span class="co">// Must be called *inside* a user gesture (a button tap)</span></span>
@@ -343,17 +331,12 @@ Jonathan Jayes
 <span id="cb1-8"><a href=""></a>                <span class="op">??</span> (<span class="dv">360</span> <span class="op">-</span> e<span class="op">.</span><span class="at">alpha</span>)<span class="op">;</span>   <span class="co">// Android</span></span>
 <span id="cb1-9"><a href=""></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div><div class="column" style="width:48%;">
-<p>Three ways to silently get <strong>nothing</strong>:</p>
-<ul>
-<li>❌ <strong>No HTTPS</strong> → sensors + geolocation blocked.</li>
-<li>❌ <strong>On page load</strong> → prompt ignored; needs a <strong>tap</strong>.</li>
-<li>❌ <strong><code>alpha</code></strong> → arbitrary origin on iOS. Use <strong><code>webkitCompassHeading</code></strong>.</li>
-</ul>
-<p><span class="chip">FIX</span> “Enable Compass” button → <code>requestPermission()</code> → read <code>webkitCompassHeading</code>.</p>
+<p>This was the part that quietly cost me an afternoon. There are three ways to get nothing at all: without HTTPS the sensors and geolocation are blocked outright; ask for permission on page load and the prompt is simply ignored, because iOS needs a real tap; and if you read <code>e.alpha</code> you get an arbitrary origin instead of north.</p>
+<p>The fix that finally worked was an “Enable Compass” button that calls <code>requestPermission()</code> on the tap, and then reads <code>webkitCompassHeading</code>.</p>
 </div></div>
 </section>
-<section id="one-container-on-cloud-run-buys-https-for-free" class="slide level2">
-<h2>One container on Cloud Run buys HTTPS for free</h2>
+<section id="one-container-on-cloud-run-and-https-comes-free" class="slide level2">
+<h2>One container on Cloud Run, and HTTPS comes free</h2>
 <div class="cell" data-reveal="true" data-layout-align="default">
 <div class="cell-output-display">
 <div>
@@ -373,40 +356,26 @@ Jonathan Jayes
 </div>
 </div>
 <div style="font-size:.68em">
-<p><strong>One image</strong>: FastAPI serves the built React SPA <em>and</em> the API on one origin → no CORS, and <strong><code>*.run.app</code> is HTTPS by default</strong> — exactly what the iOS compass needs. Keys stay in Secret Manager.</p>
+<p>I package everything as one image: FastAPI serves both the built React app and the API from a single origin, so there is no CORS to fight, and every <code>*.run.app</code> URL is HTTPS by default — which is exactly what the iPhone compass was insisting on. The keys stay in Secret Manager.</p>
 </div>
 </section>
-<section id="type-it-speak-it-or-hit-demo-then-follow-the-needle" class="slide level2">
-<h2>Type it, speak it, or hit <strong>demo</strong> — then follow the needle</h2>
+<section id="three-ways-in-then-you-just-follow-the-needle" class="slide level2">
+<h2>Three ways in, then you just follow the needle</h2>
 <div class="columns">
 <div class="column" style="width:55%;">
-<ul>
-<li>🎙️ <strong>Voice</strong> → Mistral Vox → Mistral LLM extracts the address.</li>
-<li>⌨️ <strong>Type</strong> it in the collapsible sidebar.</li>
-<li>✨ <strong>Demo</strong> → routes to <em>21 rue des Gravilliers</em> in one tap.</li>
-<li>🧭 <strong>Compass</strong> points to the nearest open dock; tap <strong>Parked</strong> to flip it toward your destination.</li>
-</ul>
-<p><span class="muted" style="font-size:.7em">Live, high-accuracy geolocation via <code>watchPosition</code>.</span></p>
+<p>You can reach a destination three ways. Speak it, and Mistral Vox transcribes while a Mistral model pulls the address out of what you said. Type it into the collapsible sidebar. Or hit demo, which drops you at 21 rue des Gravilliers in a single tap.</p>
+<p>From there the compass points at the nearest open dock, and once you’ve parked, a tap on “Parked” flips the needle toward your actual destination. Your position updates live through <code>watchPosition</code>.</p>
 </div><div class="column" style="width:45%;">
 <iframe src="https://velib-app-c3eayx2yta-od.a.run.app" style="width:360px; height:640px; border:10px solid #222; border-radius:34px; background:#fff;" loading="lazy">
 </iframe>
 </div></div>
 </section>
-<section id="live-now-and-only-the-address-ever-leaves-the-phone" class="slide level2">
-<h2>Live now — and only the address ever leaves the phone</h2>
+<section id="where-it-stands-and-whats-next" class="slide level2">
+<h2>Where it stands, and what’s next</h2>
 <div class="columns">
 <div class="column" style="width:60%;">
-<p><strong>Shipped</strong></p>
-<ul>
-<li>Single-container app on <strong>Cloud Run</strong>, HTTPS · <a href="https://velib-app-c3eayx2yta-od.a.run.app">velib-app…run.app</a></li>
-<li>Real geocoding, working <strong>iOS compass</strong>, voice + typed + demo input.</li>
-</ul>
-<p><strong>Next</strong></p>
-<ul>
-<li>Swap the 20-station demo set for the <strong>live GBFS</strong> feed.</li>
-<li>Route-aware ranking (walk time, not just crow-flies).</li>
-<li>Installable <strong>PWA</strong> + offline tiles.</li>
-</ul>
+<p>It’s live today: a single container on Cloud Run, served over HTTPS at <a href="https://velib-app-c3eayx2yta-od.a.run.app">velib-app…run.app</a>, with real geocoding, a working iOS compass, and voice, typed, and demo input all in place.</p>
+<p>What I’d reach for next is swapping the twenty-station demo set for the live GBFS feed, ranking docks by walking time rather than straight-line distance, and turning it into an installable app with offline map tiles.</p>
 </div><div class="column" style="width:40%;">
 <p><img data-src="assets/cat-2.gif" style="border-radius:12px;;width:95.0%"></p>
 <p><span class="muted" style="font-size:.6em">Merci — questions?</span></p>
@@ -594,9 +563,9 @@ Jonathan Jayes
         // The "normal" size of the presentation, aspect ratio will be preserved
         // when the presentation is scaled to fit different resolutions. Can be
         // specified using percentage units.
-        width: 1200,
+        width: 1600,
 
-        height: 720,
+        height: 900,
 
         // Factor of the display size that should remain empty around the content
         margin: 0.1,
