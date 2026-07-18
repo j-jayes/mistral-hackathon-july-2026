@@ -309,6 +309,23 @@ function App() {
     }
   }, []);
 
+  // Set a destination from a typed address or the demo, geocoding it to coords.
+  const applyDestination = useCallback((address: string) => {
+    const trimmed = address.trim();
+    if (!trimmed) return;
+    const base: DestinationInput = { address: trimmed };
+    setDestination(base);
+    setIsParked(false);
+    geocodeAddress(trimmed)
+      .then(location => setDestination({ ...base, location }))
+      .catch(err => console.error('Error geocoding destination:', err));
+  }, []);
+
+  // Demo mode: route to 21 rue des Gravilliers.
+  const handleDemo = useCallback(() => {
+    applyDestination('21 rue des Gravilliers, Paris');
+  }, [applyDestination]);
+
   // Toggle parked status
   const toggleParkedStatus = useCallback(() => {
     setIsParked(prev => !prev);
@@ -373,6 +390,8 @@ function App() {
                 isRefreshing={isRefreshing}
                 compassPermission={orientation.permission}
                 onEnableCompass={orientation.requestPermission}
+                onSetDestination={applyDestination}
+                onDemoMode={handleDemo}
                 onVoiceResult={handleVoiceResult}
                 onToggleParked={toggleParkedStatus}
                 onSelectStation={selectStation}
